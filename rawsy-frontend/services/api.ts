@@ -1,36 +1,38 @@
-import axios from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+// utils/api.ts
+import axios from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Device from "expo-device";
 
-const API_BASE_URL = 'http://localhost:5000/api';
+// Detect correct base URL automatically (optional)
+//const LOCAL_IP = "10.19.18.42"; // change this to YOUR PC's IP
+const API_BASE_URL =`http://10.19.18.42:4000/api`;
+ // Device.deviceName?.includes("Android") || Device.osName === "android"
+   // ? `http://${LOCAL_IP}:5000/api`
+    //: `http://localhost:5000/api`;
 
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
-api.interceptors.request.use(
-  async (config) => {
-    const token = await AsyncStorage.getItem('authToken');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
+// Attach token
+api.interceptors.request.use(async (config) => {
+  const token = await AsyncStorage.getItem("authToken");
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
 
+// If unauthorized, remove stored auth
 api.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    if (error.response?.status === 401) {
-      await AsyncStorage.removeItem('authToken');
-      await AsyncStorage.removeItem('userData');
+  (res) => res,
+  async (err) => {
+    if (err.response?.status === 401) {
+      await AsyncStorage.removeItem("authToken");
+      await AsyncStorage.removeItem("userData");
     }
-    return Promise.reject(error);
+    return Promise.reject(err);
   }
 );
 

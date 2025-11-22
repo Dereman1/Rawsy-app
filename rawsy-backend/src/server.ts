@@ -16,6 +16,7 @@ import reviewRoutes from "./modules/reviews/review.routes";
 import quoteRoutes from "./modules/quotes/quote.routes";
 import supportRoutes from "./modules/support/support.routes";
 
+
 const app = express();
 
 // Middlewares
@@ -43,6 +44,6 @@ app.get("/", (req, res) => {
 
 
 // Start server
-app.listen(process.env.PORT, () => {
+app.listen(4000, "0.0.0.0", () => {
   console.log(`Server running on port ${process.env.PORT}`);
 });

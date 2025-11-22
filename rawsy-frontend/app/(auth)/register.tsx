@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
-import { Text, TextInput, Button, HelperText, SegmentedButtons } from 'react-native-paper';
+import { Text, TextInput, Button, HelperText, SegmentedButtons, Snackbar } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
 
@@ -16,6 +16,7 @@ export default function RegisterScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [successMsg, setSuccessMsg] = useState('');
 
   const handleRegister = async () => {
     setError('');
@@ -52,12 +53,10 @@ export default function RegisterScreen() {
       if (phone) registerData.phone = phone;
 
       await register(registerData);
-
-      if (role === 'supplier') {
-        router.replace('/(tabs)');
-      } else {
-        router.replace('/(tabs)');
-      }
+      setSuccessMsg('Account created successfully!');
+      setTimeout(() => {
+  router.replace('/'); // redirect after 1 second
+}, 1000);
     } catch (err: any) {
       setError(err.message || 'Registration failed. Please try again.');
     } finally {
@@ -171,6 +170,14 @@ export default function RegisterScreen() {
           </Button>
         </View>
       </ScrollView>
+      <Snackbar
+  visible={!!successMsg}
+  onDismiss={() => setSuccessMsg('')}
+  duration={1500}
+>
+  {successMsg}
+</Snackbar>
+
     </KeyboardAvoidingView>
   );
 }

@@ -24,7 +24,7 @@ export default function LoginScreen() {
     setLoading(true);
     try {
       await login(emailOrPhone, password);
-      router.replace('/(tabs)');
+      router.replace('/');
     } catch (err: any) {
       setError(err.message || 'Login failed. Please try again.');
     } finally {
@@ -94,7 +94,7 @@ export default function LoginScreen() {
             onPress={() => router.push('/(auth)/register')}
             style={styles.linkButton}
           >
-            Don't have an account? Sign Up
+            {"Don't have an account? Sign Up"}
           </Button>
         </View>
       </ScrollView>
