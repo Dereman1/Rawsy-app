@@ -1,0 +1,65 @@
+# Node modules
+rawsy-backend/node_modules/
+rawsy-frontend/node_modules/
+
+# Build output
+rawsy-backend/dist/
+rawsy-frontend/dist/
+rawsy-frontend/.expo/
+rawsy-frontend/web-build/
+rawsy-frontend/.expo-shared/
+rawsy-frontend/.turbo/
+rawsy-frontend/.next/
+
+# Expo environment types
+rawsy-frontend/expo-env.d.ts
+
+# Native
+.kotlin/
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Metro
+.metro-health-check*
+
+# Debug logs
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+pnpm-debug.log
+
+# macOS
+.DS_Store
+*.pem
+
+# Local env files
+.env*.local
+rawsy-backend/.env
+
+# Typescript
+*.tsbuildinfo
+
+# Example files
+app-example
+
+# Generated native folders
+/ios
+/android
+
+# Firebase key (keep secret)
+rawsy-backend/src/config/firebase-service-account.json
+
+# Logs
+logs/
+*.log
+
+# IDE folders
+.vscode/
+.idea/
+
+# OS trash
+Thumbs.db
