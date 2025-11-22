@@ -1,23 +1,17 @@
-import { Tabs } from "expo-router";
+import { Stack } from "expo-router";
 import { Provider as PaperProvider } from "react-native-paper";
+import { AuthProvider } from "../context/AuthContext";
 
-export default function Layout() {
+export default function RootLayout() {
   return (
     <PaperProvider>
-      <Tabs>
-        <Tabs.Screen
-          name="index"
-          options={{
-            title: "Home",
-          }}
-        />
-        <Tabs.Screen
-          name="settings"
-          options={{
-            title: "Settings",
-          }}
-        />
-      </Tabs>
+      <AuthProvider>
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="(auth)" />
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="index" />
+        </Stack>
+      </AuthProvider>
     </PaperProvider>
   );
 }
