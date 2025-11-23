@@ -4,12 +4,14 @@ import { useTheme } from '../../context/ThemeContext';
 import { useState, useEffect } from 'react';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import api from '../../services/api';
+import { useRouter } from 'expo-router';
 
 const { width } = Dimensions.get('window');
 const cardWidth = (width - 48) / 2;
 
 export default function ProductsScreen() {
   const { theme } = useTheme();
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -131,7 +133,11 @@ export default function ProductsScreen() {
         ) : (
           <View style={styles.productGrid}>
             {filteredProducts.map((product: any) => (
-              <Card key={product._id} style={[styles.productCard, { width: cardWidth }]}>
+              <Card
+                key={product._id}
+                style={[styles.productCard, { width: cardWidth }]}
+                onPress={() => router.push(`/product/${product._id}`)}
+              >
                 <View style={styles.imageContainer}>
                   <Card.Cover
                     source={{ uri: product.image || product.images?.[0] || 'https://via.placeholder.com/200' }}
