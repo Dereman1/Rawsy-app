@@ -3,16 +3,19 @@ import { View, StyleSheet, ScrollView, KeyboardAvoidingView, Platform } from 're
 import { Text, TextInput, Button, HelperText, SegmentedButtons, Snackbar } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function RegisterScreen() {
   const router = useRouter();
   const { register } = useAuth();
+  const { theme } = useTheme();
   const [name, setName] = useState('');
+  const [companyName, setCompanyName] = useState('');
+  const [companyType, setCompanyType] = useState<'manufacturer' | 'supplier'>('manufacturer');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [role, setRole] = useState<'manufacturer' | 'supplier'>('manufacturer');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -46,17 +49,18 @@ export default function RegisterScreen() {
       const registerData: any = {
         name,
         password,
-        role,
+        role: companyType,
       };
 
       if (email) registerData.email = email;
       if (phone) registerData.phone = phone;
+      if (companyName) registerData.companyName = companyName;
 
       await register(registerData);
       setSuccessMsg('Account created successfully!');
       setTimeout(() => {
-  router.replace('/'); // redirect after 1 second
-}, 1000);
+        router.replace('/');
+      }, 1000);
     } catch (err: any) {
       setError(err.message || 'Registration failed. Please try again.');
     } finally {
@@ -67,7 +71,7 @@ export default function RegisterScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
     >
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
@@ -81,11 +85,11 @@ export default function RegisterScreen() {
 
         <View style={styles.form}>
           <Text variant="labelLarge" style={styles.label}>
-            I am a
+            Company Type
           </Text>
           <SegmentedButtons
-            value={role}
-            onValueChange={(value) => setRole(value as 'manufacturer' | 'supplier')}
+            value={companyType}
+            onValueChange={(value) => setCompanyType(value as 'manufacturer' | 'supplier')}
             buttons={[
               { value: 'manufacturer', label: 'Manufacturer' },
               { value: 'supplier', label: 'Supplier' },
@@ -94,9 +98,18 @@ export default function RegisterScreen() {
           />
 
           <TextInput
-            label="Full Name"
+            label="Full Name *"
             value={name}
             onChangeText={setName}
+            mode="outlined"
+            autoCapitalize="words"
+            style={styles.input}
+          />
+
+          <TextInput
+            label="Company Name"
+            value={companyName}
+            onChangeText={setCompanyName}
             mode="outlined"
             autoCapitalize="words"
             style={styles.input}
@@ -113,11 +126,12 @@ export default function RegisterScreen() {
           />
 
           <TextInput
-            label="Phone Number (Optional)"
+            label="Phone Number *"
             value={phone}
             onChangeText={setPhone}
             mode="outlined"
             keyboardType="phone-pad"
+            placeholder="e.g. +251912345678"
             style={styles.input}
           />
 
@@ -185,7 +199,6 @@ export default function RegisterScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
   },
   scrollContent: {
     flexGrow: 1,

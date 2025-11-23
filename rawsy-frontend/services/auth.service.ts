@@ -7,6 +7,7 @@ interface RegisterData {
   phone?: string;
   password: string;
   role: 'manufacturer' | 'supplier';
+  companyName?: string;
 }
 
 interface LoginData {
@@ -67,5 +68,14 @@ export const authService = {
   isAuthenticated: async (): Promise<boolean> => {
     const token = await AsyncStorage.getItem('authToken');
     return !!token;
+  },
+
+  updateStoredUser: async (user: any): Promise<void> => {
+    await AsyncStorage.setItem('userData', JSON.stringify(user));
+  },
+
+  clearAuth: async (): Promise<void> => {
+    await AsyncStorage.removeItem('authToken');
+    await AsyncStorage.removeItem('userData');
   },
 };

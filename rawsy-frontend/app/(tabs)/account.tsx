@@ -145,14 +145,30 @@ export default function AccountScreen() {
             onPress={() => {}}
           />
           {user?.role === 'supplier' && (
-            <List.Item
-              title="My Products"
-              description="Manage your products"
-              left={(props) => <List.Icon {...props} icon="package" />}
-              right={(props) => <List.Icon {...props} icon="chevron-right" />}
-              onPress={() => {}}
-            />
+            <>
+              <List.Item
+                title="My Products"
+                description="Manage your products"
+                left={(props) => <List.Icon {...props} icon="package" />}
+                right={(props) => <List.Icon {...props} icon="chevron-right" />}
+                onPress={() => {}}
+              />
+              <List.Item
+                title="Verification Documents"
+                description="Upload business documents"
+                left={(props) => <List.Icon {...props} icon="file-document" />}
+                right={(props) => <List.Icon {...props} icon="chevron-right" />}
+                onPress={() => router.push('/upload-verification')}
+              />
+            </>
           )}
+          <List.Item
+            title="Complete Profile"
+            description="Update business information"
+            left={(props) => <List.Icon {...props} icon="account-edit" />}
+            right={(props) => <List.Icon {...props} icon="chevron-right" />}
+            onPress={() => router.push('/complete-profile')}
+          />
         </List.Section>
 
         <Divider />
