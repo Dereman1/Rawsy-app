@@ -14,6 +14,9 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import api from '../services/api';
+import SupplierQuoteResponseDialog from '../components/SupplierQuoteResponseDialog';
+import OrderFromQuoteDialog from '../components/OrderFromQuoteDialog';
+import PaymentUploadDialog from '../components/PaymentUploadDialog';
 
 export default function QuotesScreen() {
   const { theme } = useTheme();
@@ -23,6 +26,11 @@ export default function QuotesScreen() {
   const [quotes, setQuotes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [selectedQuote, setSelectedQuote] = useState<any>(null);
+  const [showResponseDialog, setShowResponseDialog] = useState(false);
+  const [showOrderDialog, setShowOrderDialog] = useState(false);
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchQuotes();
@@ -45,6 +53,30 @@ export default function QuotesScreen() {
     setRefreshing(true);
     await fetchQuotes();
     setRefreshing(false);
+  };
+
+  const handleSupplierResponse = (quote: any) => {
+    setSelectedQuote(quote);
+    setShowResponseDialog(true);
+  };
+
+  const handleBuyerAccept = (quote: any) => {
+    setSelectedQuote(quote);
+    setShowOrderDialog(true);
+  };
+
+  const handleBuyerDecline = async (quote: any) => {
+    try {
+      await api.put(`/quotes/${quote._id}/buyer-action`, { action: 'cancel' });
+      await fetchQuotes();
+    } catch (error: any) {
+      console.error('Error declining quote:', error);
+    }
+  };
+
+  const handleOrderSuccess = (orderId: string) => {
+    setCreatedOrderId(orderId);
+    setShowPaymentDialog(true);
   };
 
   const getStatusColor = (status: string) => {
@@ -225,26 +257,80 @@ export default function QuotesScreen() {
                       <View style={styles.actionButtons}>
                         <Button
                           mode="outlined"
-                          onPress={() => {}}
+                          onPress={() => handleBuyerDecline(quote)}
                           style={styles.actionButton}
                         >
                           Decline
                         </Button>
                         <Button
                           mode="contained"
-                          onPress={() => {}}
+                          onPress={() => handleBuyerAccept(quote)}
                           style={styles.actionButton}
                         >
                           Accept & Order
                         </Button>
                       </View>
                     )}
+
+                  {user?.role === 'supplier' && quote.status === 'pending' && (
+                    <View style={styles.actionButtons}>
+                      <Button
+                        mode="contained"
+                        onPress={() => handleSupplierResponse(quote)}
+                        style={styles.actionButton}
+                        icon="reply"
+                      >
+                        Respond to Quote
+                      </Button>
+                    </View>
+                  )}
                 </Card.Content>
               </Card>
             ))}
           </View>
         )}
       </ScrollView>
+
+      {selectedQuote && (
+        <>
+          <SupplierQuoteResponseDialog
+            visible={showResponseDialog}
+            onDismiss={() => {
+              setShowResponseDialog(false);
+              setSelectedQuote(null);
+            }}
+            quote={selectedQuote}
+            onSuccess={fetchQuotes}
+          />
+
+          <OrderFromQuoteDialog
+            visible={showOrderDialog}
+            onDismiss={() => {
+              setShowOrderDialog(false);
+              setSelectedQuote(null);
+            }}
+            quote={selectedQuote}
+            onSuccess={handleOrderSuccess}
+          />
+        </>
+      )}
+
+      {createdOrderId && (
+        <PaymentUploadDialog
+          visible={showPaymentDialog}
+          onDismiss={() => {
+            setShowPaymentDialog(false);
+            setCreatedOrderId(null);
+            fetchQuotes();
+          }}
+          orderId={createdOrderId}
+          onSuccess={() => {
+            setShowPaymentDialog(false);
+            setCreatedOrderId(null);
+            fetchQuotes();
+          }}
+        />
+      )}
     </View>
   );
 }

@@ -15,6 +15,7 @@ export default function HomeScreen() {
     { icon: "shopping-cart", label: "View Cart", screen: "/cart" },
     { icon: "favorite", label: "Wishlist", screen: "/wishlist" },
     { icon: "request-quote", label: "Quotes", screen: "/quotes" },
+    { icon: "receipt", label: "Orders", screen: "/orders" },
   ];
 
   return (
