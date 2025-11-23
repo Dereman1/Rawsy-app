@@ -9,6 +9,7 @@ import {
   getTrends
 } from "./admin.metrics.controller";
 import { requireAdmin } from "../../middlewares/admin.middleware";
+import { reviewProduct } from "./productModeration.controller";
 
 const router = Router();
 
@@ -20,6 +21,7 @@ router.put("/supplier/reject/:id", authenticate, requireRole("admin"), rejectSup
 
 // ⭐ Verify supplier (trusted badge)
 router.put("/supplier/verify/:id", authenticate, requireRole("admin"), verifySupplier);
+router.put("/products/review/:id", authenticate, requireAdmin, reviewProduct);
 
 router.get("/metrics/overview", authenticate, requireAdmin, getOverview);
 router.get("/metrics/top-suppliers", authenticate, requireAdmin, getTopSuppliers);

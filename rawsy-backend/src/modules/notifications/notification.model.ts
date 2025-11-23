@@ -34,6 +34,10 @@ const NotificationSchema = new Schema(
         // 🔹 Support Ticket Notifications
         "ticket_created",
         "ticket_resolved",
+        // 🔹 Product Moderation (for suppliers)
+        "product_approved",
+        "product_rejected",
+
         // 🔹 Chat / messaging (future)
         "message"
       ],

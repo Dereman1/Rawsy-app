@@ -1,10 +1,11 @@
 import { Request, Response } from "express";
 import Product from "./product.model";
 import { notifyWishlistUsers } from "../../services/notification.service";
+
 /**
- * -------------------------------
- *  CREATE PRODUCT (Supplier only)
- * -------------------------------
+ * ================================
+ *   CREATE PRODUCT (Supplier Only)
+ * ================================
  */
 export const createProduct = async (req: Request, res: Response) => {
   try {
@@ -23,10 +24,11 @@ export const createProduct = async (req: Request, res: Response) => {
       price,
       unit,
       stock,
-      negotiable: negotiable ?? false // default false
+      negotiable: negotiable ?? false,
+      status: "pending" // product waits for admin approval
     });
 
-    return res.json({ message: "Product created successfully", product });
+    return res.json({ message: "Product submitted for review", product });
 
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
@@ -35,17 +37,22 @@ export const createProduct = async (req: Request, res: Response) => {
 
 
 /**
- * -------------------------------
- *  GET PRODUCT BY ID (Public)
- * -------------------------------
+ * ================================
+ *   GET PRODUCT BY ID (Public)
+ * ================================
  */
-export const getProductById: any = async (req: Request, res: Response) => {
+export const getProductById = async (req: Request, res: Response) => {
   try {
     const id = req.params.id;
     const product = await Product.findById(id)
       .populate("supplier", "name companyName phone averageRating verifiedSupplier");
 
     if (!product) return res.status(404).json({ error: "Product not found" });
+
+    // only show approved for public users
+    if (product.status !== "approved") {
+      return res.status(403).json({ error: "Product not approved yet" });
+    }
 
     return res.json(product);
   } catch (err: any) {
@@ -55,13 +62,13 @@ export const getProductById: any = async (req: Request, res: Response) => {
 
 
 /**
- * -------------------------------
- *  GET ALL PRODUCTS (Public)
- * -------------------------------
+ * ================================
+ *   GET ALL APPROVED PRODUCTS (Public)
+ * ================================
  */
 export const getAllProducts = async (req: Request, res: Response) => {
   try {
-    const products = await Product.find()
+    const products = await Product.find({ status: "approved" })
       .populate("supplier", "name companyName phone averageRating verifiedSupplier");
 
     return res.json(products);
@@ -72,9 +79,9 @@ export const getAllProducts = async (req: Request, res: Response) => {
 
 
 /**
- * -------------------------------
- *  GET MY PRODUCTS (Supplier Only)
- * -------------------------------
+ * ================================
+ *   GET MY PRODUCTS (Supplier Only)
+ * ================================
  */
 export const getMyProducts = async (req: Request, res: Response) => {
   try {
@@ -89,60 +96,55 @@ export const getMyProducts = async (req: Request, res: Response) => {
 
 
 /**
- * -------------------------------
- *  UPDATE PRODUCT (Supplier-Only)
- * -------------------------------
+ * ================================
+ *   UPDATE PRODUCT (Supplier Only)
+ * ================================
+ *  ❗ After update → product becomes pending again
  */
 export const updateProduct = async (req: Request, res: Response) => {
   try {
     const user = (req as any).user;
     const productId = req.params.id;
 
-    // fetch existing product first (so we can compare)
     const oldProduct: any = await Product.findById(productId);
     if (!oldProduct) return res.status(404).json({ error: "Product not found" });
 
-    // ownership
     if (oldProduct.supplier.toString() !== user.id) {
       return res.status(403).json({ error: "You cannot update this product" });
     }
 
-    // allowed updates (same as before)
     const allowedFields = ["name", "description", "category", "price", "unit", "stock", "negotiable"];
     const data: any = {};
     for (const key of allowedFields) {
       if (req.body[key] !== undefined) data[key] = req.body[key];
     }
 
-    // perform update and get the new doc
+    // when supplier updates → admin must approve again
+    data.status = "pending";
+    data.rejectionReason = null;
+
     const updated = await Product.findByIdAndUpdate(productId, data, { new: true }).lean();
 
-    // Compare old vs new and trigger wishlist notifications
     try {
       if (!updated) throw new Error("Updated product not found");
-      // price drop
-      if (typeof oldProduct.price === "number" && typeof updated.price === "number") {
-        if (updated.price < oldProduct.price) {
-          await notifyWishlistUsers(updated, {
-            type: "price_drop",
-            oldPrice: oldProduct.price,
-            newPrice: updated.price
-          });
-        }
+
+      if (oldProduct.price > updated.price) {
+        await notifyWishlistUsers(updated, {
+          type: "price_drop",
+          oldPrice: oldProduct.price,
+          newPrice: updated.price
+        });
       }
 
-      // back in stock (0 -> >0)
-      const oldStock = typeof oldProduct.stock === "number" ? oldProduct.stock : null;
-      const newStock = typeof updated.stock === "number" ? updated.stock : null;
-      if ((oldStock === 0 || oldStock === null) && newStock && newStock > 0) {
+      if (oldProduct.stock === 0 && updated.stock > 0) {
         await notifyWishlistUsers(updated, { type: "back_in_stock" });
       }
     } catch (notifyErr) {
-      console.warn("Wishlist notification failed (non-fatal):", notifyErr);
+      console.warn("Wishlist notification failed:", notifyErr);
     }
 
     return res.json({
-      message: "Product updated successfully",
+      message: "Product updated, waiting for admin review",
       product: updated
     });
 
@@ -153,9 +155,9 @@ export const updateProduct = async (req: Request, res: Response) => {
 
 
 /**
- * -------------------------------
- *  DELETE PRODUCT (Supplier Only)
- * -------------------------------
+ * ================================
+ *   DELETE PRODUCT (Supplier Only)
+ * ================================
  */
 export const deleteProduct = async (req: Request, res: Response) => {
   try {
@@ -177,33 +179,30 @@ export const deleteProduct = async (req: Request, res: Response) => {
     return res.status(500).json({ error: err.message });
   }
 };
-
-
 /**
  * -------------------------------
- *  TOP RATED PRODUCTS
+ *  TOP RATED PRODUCTS (Public)
  * -------------------------------
  */
 export const getTopRatedProducts = async (req: Request, res: Response) => {
   try {
     const limit = Number(req.query.limit) || 10;
 
-    const products = await Product.find()
-      .sort({ averageRating: -1, reviewCount: -1 })
+    const products = await Product.find({ status: "approved" })
+      .sort({ "rating.average": -1, "rating.count": -1 })
       .limit(limit)
-      .select("name category price unit images thumbnail supplier stock averageRating reviewCount")
+      .select("name category price unit image images supplier stock rating")
       .populate("supplier", "name companyName verifiedSupplier");
 
     return res.json({ products });
+
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }
 };
-
-
 /**
  * -------------------------------
- *  SEARCH & FILTER PRODUCTS
+ *  SEARCH & FILTER PRODUCTS (Public)
  * -------------------------------
  */
 export const searchProducts = async (req: Request, res: Response) => {
@@ -224,12 +223,16 @@ export const searchProducts = async (req: Request, res: Response) => {
       limit = 12
     } = req.query;
 
-    const filter: any = {};
+    // Default: show only approved products
+    const filter: any = { status: "approved" };
 
     // 🔍 Keyword search
     if (q) filter.name = { $regex: q as string, $options: "i" };
 
+    // 📂 Category filter
     if (category) filter.category = category;
+
+    // 🔄 Negotiable Filter
     if (negotiable === "true") filter.negotiable = true;
 
     // 💰 Price range
@@ -242,32 +245,28 @@ export const searchProducts = async (req: Request, res: Response) => {
     // 📦 Only products with stock > 0
     if (inStock === "true") filter.stock = { $gt: 0 };
 
-    // ⭐ Supplier filters (rating + verified)
+    // ⭐ Supplier filters
     const supplierFilter: any = {};
-    if (supplierRating) supplierFilter.averageRating = { $gte: Number(supplierRating) };
+    if (supplierRating) supplierFilter["rating.average"] = { $gte: Number(supplierRating) };
     if (verifiedSupplier === "true") supplierFilter.verifiedSupplier = true;
 
     const skip = (Number(page) - 1) * Number(limit);
 
-    /**
-     * 🚗 Nearby supplier filter logic
-     * We cannot filter distance inside Mongo populate,
-     * so we populate then filter manually.
-     */
+    // ⚡ Find products with supplier data
     let products = await Product.find(filter)
       .populate({
         path: "supplier",
-        select: "name companyName averageRating verifiedSupplier businessLocation",
+        select: "name companyName rating verifiedSupplier businessLocation",
         match: supplierFilter
       })
       .skip(skip)
       .limit(Number(limit))
       .lean();
 
-    // Remove products with no supplier match
+    // Remove products with no supplier after filtering
     products = products.filter((p: any) => p.supplier);
 
-    // 📍 Filter by distance if provided
+    // 📍 Distance filter
     if (nearLat && nearLng) {
       const buyerLat = Number(nearLat);
       const buyerLng = Number(nearLng);
@@ -306,5 +305,7 @@ const getDistanceKm = (lat1: number, lon1: number, lat2: number, lon2: number): 
       Math.sin(dLon / 2);
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 };
+
+
 
 

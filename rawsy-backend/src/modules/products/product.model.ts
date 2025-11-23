@@ -13,39 +13,48 @@ const ProductSchema = new Schema(
     category: { type: String, required: true },
 
     price: { type: Number, required: true },
-    unit: { type: String, required: true }, // kg, ton, liter, etc.
+    unit: { type: String, required: true }, 
     stock: { type: Number, required: true },
-     discount: {
-  percentage: { type: Number, default: 0 }, // e.g., 20%
-  active: { type: Boolean, default: false },
-  expiresAt: { type: Date, default: null }
-},
-    // 🌤️ Cloudinary image URL (final saved URL)
-    image: { type: String, default: null },
 
-    // 🖼️ Optional future support for multiple photos (not active yet)
+    // 💰 Discount
+    discount: {
+      percentage: { type: Number, default: 0 },
+      active: { type: Boolean, default: false },
+      expiresAt: { type: Date, default: null }
+    },
+
+    // 🖼️ Images
+    image: { type: String, default: null },
     images: { type: [String], default: [] },
 
+    // 🛑 Moderation
     status: {
       type: String,
-      enum: ["active", "inactive"],
-      default: "active"
+      enum: ["pending", "approved", "rejected"],
+      default: "pending"      
     },
+    rejectionReason: { type: String, default: null },
+
+    // ⭐ Rating
     rating: {
-  average: { type: Number, default: 0 },
-  count: { type: Number, default: 0 }
-},
-negotiable: { type: Boolean, default: false }
-  }, 
+      average: { type: Number, default: 0 },
+      count: { type: Number, default: 0 }
+    },
+
+    negotiable: { type: Boolean, default: false }
+  },
   { timestamps: true }
 );
-ProductSchema.virtual('finalPrice').get(function () {
+
+// 💵 Virtual final price with discount
+ProductSchema.virtual("finalPrice").get(function () {
   if (this.discount?.active && this.discount.percentage > 0) {
     return this.price - (this.price * this.discount.percentage) / 100;
   }
   return this.price;
 });
-ProductSchema.set('toJSON', { virtuals: true });
-ProductSchema.set('toObject', { virtuals: true });
+
+ProductSchema.set("toJSON", { virtuals: true });
+ProductSchema.set("toObject", { virtuals: true });
 
 export default model("Product", ProductSchema);
