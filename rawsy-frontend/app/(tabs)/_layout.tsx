@@ -10,8 +10,8 @@ export default function TabsLayout() {
 
   if (loading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" />
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.colors.background }}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
       </View>
     );
   }
@@ -43,33 +43,29 @@ export default function TabsLayout() {
         name="products"
         options={{
           title: 'Products',
-          tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="inventory" size={size} color={color} />
-          ),
+          tabBarIcon: ({ color, size }) => <MaterialIcons name="inventory" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="cart"
         options={{
           title: 'Cart',
-          tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="shopping-cart" size={size} color={color} />
-          ),
+          tabBarIcon: ({ color, size }) => <MaterialIcons name="shopping-cart" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="account"
         options={{
           title: 'Account',
-          tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="account-circle" size={size} color={color} />
-          ),
+          tabBarIcon: ({ color, size }) => <MaterialIcons name="account-circle" size={size} color={color} />,
         }}
       />
+      {/* Placeholder for Profile if needed later */}
       <Tabs.Screen
         name="profile"
         options={{
-          href: null,
+          title: 'Profile',
+          tabBarIcon: ({ color, size }) => <MaterialIcons name="person" size={size} color={color} />,
         }}
       />
     </Tabs>
