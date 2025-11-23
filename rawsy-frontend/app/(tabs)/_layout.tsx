@@ -1,10 +1,12 @@
 import { Tabs, Redirect } from 'expo-router';
-import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 import { ActivityIndicator, View } from 'react-native';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 
 export default function TabsLayout() {
   const { isAuthenticated, loading } = useAuth();
+  const { theme } = useTheme();
 
   if (loading) {
     return (
@@ -19,19 +21,55 @@ export default function TabsLayout() {
   }
 
   return (
-    <Tabs screenOptions={{ headerShown: false }}>
+    <Tabs
+      screenOptions={{
+        headerShown: false,
+        tabBarActiveTintColor: theme.colors.primary,
+        tabBarInactiveTintColor: theme.colors.onSurfaceVariant,
+        tabBarStyle: {
+          backgroundColor: theme.colors.surface,
+          borderTopColor: theme.colors.surfaceVariant,
+        },
+      }}
+    >
       <Tabs.Screen
         name="home"
         options={{
           title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol name="house.fill" color={color} />,
+          tabBarIcon: ({ color, size }) => <MaterialIcons name="home" size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="products"
+        options={{
+          title: 'Products',
+          tabBarIcon: ({ color, size }) => (
+            <MaterialIcons name="inventory" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="cart"
+        options={{
+          title: 'Cart',
+          tabBarIcon: ({ color, size }) => (
+            <MaterialIcons name="shopping-cart" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="account"
+        options={{
+          title: 'Account',
+          tabBarIcon: ({ color, size }) => (
+            <MaterialIcons name="account-circle" size={size} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profile',
-          tabBarIcon: ({ color }) => <IconSymbol name="paperplane.fill" color={color} />,
+          href: null,
         }}
       />
     </Tabs>

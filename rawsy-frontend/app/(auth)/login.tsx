@@ -3,10 +3,12 @@ import { View, StyleSheet, ScrollView, KeyboardAvoidingView, Platform } from 're
 import { Text, TextInput, Button, HelperText } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function LoginScreen() {
   const router = useRouter();
   const { login } = useAuth();
+  const { theme } = useTheme();
   const [emailOrPhone, setEmailOrPhone] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -35,7 +37,7 @@ export default function LoginScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
     >
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
@@ -105,7 +107,6 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
   },
   scrollContent: {
     flexGrow: 1,
