@@ -139,7 +139,7 @@ export default function ProductsScreen() {
                   />
                   {product.discount?.active && (
                     <Badge style={styles.discountBadge} size={28}>
-                      -{product.discount.percentage}%
+                      {String(product.discount.percentage) + '%'}
                     </Badge>
                   )}
                   {product.stock === 0 && (

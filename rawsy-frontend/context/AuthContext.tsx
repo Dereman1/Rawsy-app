@@ -8,6 +8,7 @@ interface User {
   phone?: string;
   role: 'manufacturer' | 'supplier' | 'admin';
   status: string;
+  companyName?: string;
   profileImage?: string;
 }
 

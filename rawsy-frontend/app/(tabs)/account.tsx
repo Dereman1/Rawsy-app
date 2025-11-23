@@ -53,8 +53,9 @@ export default function AccountScreen() {
             {user?.name}
           </Text>
           <Text variant="bodyMedium" style={styles.userRole}>
-            {user?.role?.charAt(0).toUpperCase() + user?.role?.slice(1)}
+           {(user?.role ?? '').charAt(0).toUpperCase() + (user?.role ?? '').slice(1)}
           </Text>
+
           {user?.status && (
             <Text
               variant="bodySmall"
