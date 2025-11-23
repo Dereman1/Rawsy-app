@@ -2,20 +2,22 @@ import { View, StyleSheet, ScrollView } from "react-native";
 import { Text, Appbar, Card, Button, Surface, Chip } from "react-native-paper";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
+import { useLanguage } from "../../context/LanguageContext";
 import { useRouter } from "expo-router";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
 export default function HomeScreen() {
   const { user } = useAuth();
   const { theme } = useTheme();
+  const { t } = useLanguage();
   const router = useRouter();
 
   const quickActions = [
-    { icon: "inventory", label: "Browse Products", screen: "/products" },
-    { icon: "shopping-cart", label: "View Cart", screen: "/cart" },
-    { icon: "favorite", label: "Wishlist", screen: "/wishlist" },
-    { icon: "request-quote", label: "Quotes", screen: "/quotes" },
-    { icon: "receipt", label: "Orders", screen: "/orders" },
+    { icon: "inventory", label: t('products'), screen: "/products" },
+    { icon: "shopping-cart", label: t('cart'), screen: "/cart" },
+    { icon: "favorite", label: t('wishlist'), screen: "/wishlist" },
+    { icon: "request-quote", label: t('quotes'), screen: "/quotes" },
+    { icon: "receipt", label: t('orders'), screen: "/orders" },
   ];
 
   return (
@@ -42,7 +44,7 @@ export default function HomeScreen() {
             variant="headlineSmall"
             style={[styles.welcomeTitle, { color: theme.colors.onSurface }]}
           >
-            Welcome back, {user?.name}!
+            {t('welcomeBack')}, {user?.name}!
           </Text>
 
           <View style={styles.userInfo}>

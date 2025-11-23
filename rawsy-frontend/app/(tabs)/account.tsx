@@ -11,11 +11,13 @@ import {
 } from 'react-native-paper';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContext';
 import { useRouter } from 'expo-router';
 
 export default function AccountScreen() {
   const { theme, isDarkMode, toggleTheme } = useTheme();
   const { user, logout } = useAuth();
+  const { t } = useLanguage();
   const router = useRouter();
 
   const handleLogout = () => {
@@ -39,7 +41,7 @@ export default function AccountScreen() {
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <Appbar.Header elevated>
-        <Appbar.Content title="Account" />
+        <Appbar.Content title={t('account')} />
       </Appbar.Header>
 
       <ScrollView style={styles.content}>
@@ -77,24 +79,24 @@ export default function AccountScreen() {
         </Surface>
 
         <List.Section>
-          <List.Subheader>Account Information</List.Subheader>
+          <List.Subheader>{t('accountInformation')}</List.Subheader>
           {user?.email && (
             <List.Item
-              title="Email"
+              title={t('email')}
               description={user.email}
               left={(props) => <List.Icon {...props} icon="email" />}
             />
           )}
           {user?.phone && (
             <List.Item
-              title="Phone"
+              title={t('phone')}
               description={user.phone}
               left={(props) => <List.Icon {...props} icon="phone" />}
             />
           )}
           {user?.companyName && (
             <List.Item
-              title="Company"
+              title={t('company')}
               description={user.companyName}
               left={(props) => <List.Icon {...props} icon="domain" />}
             />
@@ -104,15 +106,24 @@ export default function AccountScreen() {
         <Divider />
 
         <List.Section>
-          <List.Subheader>Preferences</List.Subheader>
+          <List.Subheader>{t('preferences')}</List.Subheader>
           <List.Item
-            title="Dark Mode"
-            description={isDarkMode ? 'Enabled' : 'Disabled'}
+            title={t('darkMode')}
+            description={isDarkMode ? t('enabled') : t('disabled')}
             left={(props) => (
               <List.Icon {...props} icon={isDarkMode ? 'weather-night' : 'weather-sunny'} />
             )}
             right={() => <Switch value={isDarkMode} onValueChange={toggleTheme} />}
           />
+          {user?.role === 'manufacturer' && (
+            <List.Item
+              title={t('language')}
+              description={t('selectLanguage')}
+              left={(props) => <List.Icon {...props} icon="translate" />}
+              right={(props) => <List.Icon {...props} icon="chevron-right" />}
+              onPress={() => router.push('/language-settings')}
+            />
+          )}
         </List.Section>
 
         <Divider />
@@ -120,14 +131,14 @@ export default function AccountScreen() {
         <List.Section>
           <List.Subheader>Actions</List.Subheader>
           <List.Item
-            title="Orders"
+            title={t('orders')}
             description="View your order history"
             left={(props) => <List.Icon {...props} icon="package-variant" />}
             right={(props) => <List.Icon {...props} icon="chevron-right" />}
-            onPress={() => {}}
+            onPress={() => router.push('/orders')}
           />
           <List.Item
-            title="Wishlist"
+            title={t('wishlist')}
             description="View saved products"
             left={(props) => <List.Icon {...props} icon="heart" />}
             right={(props) => <List.Icon {...props} icon="chevron-right" />}
@@ -147,15 +158,15 @@ export default function AccountScreen() {
         <Divider />
 
         <List.Section>
-          <List.Subheader>Support</List.Subheader>
+          <List.Subheader>{t('support')}</List.Subheader>
           <List.Item
-            title="Help & Support"
+            title={t('helpSupport')}
             left={(props) => <List.Icon {...props} icon="help-circle" />}
             right={(props) => <List.Icon {...props} icon="chevron-right" />}
             onPress={() => {}}
           />
           <List.Item
-            title="About"
+            title={t('about')}
             left={(props) => <List.Icon {...props} icon="information" />}
             right={(props) => <List.Icon {...props} icon="chevron-right" />}
             onPress={() => {}}
@@ -170,7 +181,7 @@ export default function AccountScreen() {
             style={styles.logoutButton}
             icon="logout"
           >
-            Logout
+            {t('logout')}
           </Button>
         </View>
       </ScrollView>

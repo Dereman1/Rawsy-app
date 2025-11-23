@@ -1,8 +1,8 @@
-// app/_layout.tsx
 import { Stack } from "expo-router";
 import { Provider as PaperProvider } from "react-native-paper";
 import { AuthProvider } from "../context/AuthContext";
 import { ThemeProvider, useTheme } from "../context/ThemeContext";
+import { LanguageProvider } from "../context/LanguageContext";
 import { StatusBar } from "expo-status-bar";
 
 function RootLayoutInner() {
@@ -13,15 +13,17 @@ function RootLayoutInner() {
       <StatusBar style={isDarkMode ? "light" : "dark"} />
 
       <AuthProvider>
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            contentStyle: { backgroundColor: theme.colors.background },
-          }}
-        >
-          <Stack.Screen name="(auth)" />
-          <Stack.Screen name="(tabs)" />
-        </Stack>
+        <LanguageProvider>
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              contentStyle: { backgroundColor: theme.colors.background },
+            }}
+          >
+            <Stack.Screen name="(auth)" />
+            <Stack.Screen name="(tabs)" />
+          </Stack>
+        </LanguageProvider>
       </AuthProvider>
     </PaperProvider>
   );
