@@ -62,6 +62,11 @@ const UserSchema = new Schema(
         lng: Number
       }
     },
+    language: {
+  type: String,
+  enum: ["en", "am", "om"],
+  default: "en"
+},
 
     // ⭐ Trust Badge (extra, not required to sell)
     verifiedSupplier: { type: Boolean, default: false },

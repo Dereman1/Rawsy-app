@@ -6,7 +6,13 @@ import { saveNotification, sendPushNotification } from "../../services/notificat
 // ---------------- REGISTER ----------------
 export const register = async (req: Request, res: Response) => {
   try {
-    const user = await registerUser(req.body);
+    const { language } = req.body; // 👈 NEW (accept language)
+
+    const user = await registerUser({
+      ...req.body,
+      language: language || "en" // default English
+    });
+
     return res.json(user);
   } catch (err: any) {
     return res.status(400).json({ error: err.message });
@@ -23,6 +29,7 @@ export const login = async (req: Request, res: Response) => {
     return res.status(400).json({ error: err.message });
   }
 };
+
 
 // ---------------- ADMIN: LIST MANUFACTURERS ----------------
 export const listManufacturers = async (req: Request, res: Response) => {
@@ -152,5 +159,21 @@ export const unsuspendManufacturer = async (req: Request, res: Response) => {
 
   } catch (err) {
     return res.status(500).json({ error: "Failed to unsuspend manufacturer" });
+  }
+};
+// ---------------- UPDATE LANGUAGE ----------------
+export const updateLanguage = async (req: Request, res: Response) => {
+  try {
+    const { language } = req.body;
+    const user = (req as any).user;
+
+    if (!["en", "am", "om"].includes(language))
+      return res.status(400).json({ error: "Invalid language" });
+
+    await User.findByIdAndUpdate(user.id, { language });
+
+    return res.json({ message: "Language updated" });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
   }
 };
