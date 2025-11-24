@@ -44,13 +44,17 @@ export const createProduct = async (req: Request, res: Response) => {
 export const getProductById = async (req: Request, res: Response) => {
   try {
     const id = req.params.id;
+    const user = (req as any).user;
     const product = await Product.findById(id)
       .populate("supplier", "name companyName phone averageRating verifiedSupplier");
 
     if (!product) return res.status(404).json({ error: "Product not found" });
 
+    // Allow supplier to view their own products regardless of status
+    const isOwner = user && product.supplier._id.toString() === user.id;
+
     // only show approved for public users
-    if (product.status !== "approved") {
+    if (product.status !== "approved" && !isOwner) {
       return res.status(403).json({ error: "Product not approved yet" });
     }
 
