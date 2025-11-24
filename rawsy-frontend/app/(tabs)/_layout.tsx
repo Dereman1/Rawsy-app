@@ -42,7 +42,7 @@ export default function TabsLayout() {
         options={{
           title: t('home'),
           tabBarIcon: ({ color, size, focused }) => (
-            <MaterialIcons name={focused ? "home" : "home-outlined"} size={size} color={color} />
+            <MaterialIcons name={focused ? "home" : "home-filled"} size={size} color={color} />
           ),
         }}
       />
@@ -77,25 +77,16 @@ export default function TabsLayout() {
           }}
         />
       )}
-      {isManufacturer && (
-        <Tabs.Screen
-          name="cart"
-          options={{
-            title: t('cart'),
-            tabBarIcon: ({ color, size, focused }) => (
+      <Tabs.Screen
+  name="cart"
+  options={{
+    title: t('cart'),
+    href: isManufacturer ? undefined : null,
+    tabBarIcon: ({ color, size, focused }) => (
               <MaterialIcons name={focused ? "shopping-cart" : "shopping-cart"} size={size} color={color} />
             ),
-          }}
-        />
-      )}
-      {isSupplier && (
-        <Tabs.Screen
-          name="cart"
-          options={{
-            href: null,
-          }}
-        />
-      )}
+  }}
+/>
       <Tabs.Screen
         name="account"
         options={{
