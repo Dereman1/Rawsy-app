@@ -78,6 +78,14 @@ export default function TabsLayout() {
           }}
         />
       )}
+      {isSupplier && (
+        <Tabs.Screen
+          name="cart"
+          options={{
+            href: null,
+          }}
+        />
+      )}
       <Tabs.Screen
         name="account"
         options={{

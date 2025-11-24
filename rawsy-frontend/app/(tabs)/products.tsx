@@ -1,5 +1,5 @@
-import { View, StyleSheet, ScrollView, RefreshControl, Dimensions } from 'react-native';
-import { Text, Appbar, Card, Searchbar, Chip, ActivityIndicator, Badge, FAB } from 'react-native-paper';
+import { View, StyleSheet, ScrollView, RefreshControl, Dimensions, Alert } from 'react-native';
+import { Text, Appbar, Card, Searchbar, Chip, ActivityIndicator, Badge, FAB, Button, Surface, Divider } from 'react-native-paper';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { useState, useEffect } from 'react';
@@ -24,6 +24,7 @@ interface Product {
   rating?: { average: number; count: number };
   negotiable?: boolean;
   status?: string;
+  rejectionReason?: string;
 }
 
 export default function ProductsScreen() {
@@ -272,6 +273,36 @@ function SupplierProductsView() {
     setRefreshing(false);
   };
 
+  const handleDeleteProduct = async (productId: string) => {
+    Alert.alert(
+      'Delete Product',
+      'Are you sure you want to delete this product? This action cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await api.delete(`/products/${productId}`);
+              Alert.alert('Success', 'Product deleted successfully');
+              await fetchMyProducts();
+            } catch (error: any) {
+              Alert.alert('Error', error.response?.data?.error || 'Failed to delete product');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleEditProduct = (product: Product) => {
+    router.push({
+      pathname: '/edit-product',
+      params: { id: product._id }
+    });
+  };
+
   const filteredProducts = products.filter((product) => {
     if (selectedStatus === 'all') return true;
     return product.status === selectedStatus;
@@ -420,13 +451,54 @@ function SupplierProductsView() {
                         </View>
                       </View>
 
-                      <Chip
-                        style={{ backgroundColor: getStatusColor(product.status), alignSelf: 'flex-start', marginTop: 8 }}
-                        textStyle={{ color: '#fff', fontSize: 11 }}
-                      >
-                        {product.status}
-                      </Chip>
+                      <View style={styles.statusRow}>
+                        <Chip
+                          style={{ backgroundColor: getStatusColor(product.status), alignSelf: 'flex-start' }}
+                          textStyle={{ color: '#fff', fontSize: 11 }}
+                        >
+                          {product.status}
+                        </Chip>
+                      </View>
                     </View>
+                  </View>
+
+                  {product.status === 'rejected' && product.rejectionReason && (
+                    <Surface style={[styles.rejectionBox, { backgroundColor: '#fee2e2' }]} elevation={0}>
+                      <View style={styles.rejectionHeader}>
+                        <MaterialIcons name="info" size={18} color="#dc2626" />
+                        <Text variant="labelSmall" style={{ color: '#dc2626', fontWeight: 'bold', marginLeft: 6 }}>
+                          REJECTION REASON
+                        </Text>
+                      </View>
+                      <Text variant="bodySmall" style={{ color: '#991b1b', marginTop: 4 }}>
+                        {product.rejectionReason}
+                      </Text>
+                    </Surface>
+                  )}
+
+                  <Divider style={styles.actionDivider} />
+
+                  <View style={styles.productActions}>
+                    <Button
+                      mode="outlined"
+                      onPress={() => handleEditProduct(product)}
+                      style={styles.actionBtn}
+                      icon="pencil"
+                      compact
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      mode="outlined"
+                      onPress={() => handleDeleteProduct(product._id)}
+                      style={styles.actionBtn}
+                      buttonColor="#fee2e2"
+                      textColor="#dc2626"
+                      icon="delete"
+                      compact
+                    >
+                      Delete
+                    </Button>
                   </View>
                 </Card.Content>
               </Card>
@@ -496,5 +568,11 @@ const styles = StyleSheet.create({
   productTitle: { fontWeight: '600', marginBottom: 4 },
   productMeta: { marginTop: 8, gap: 4 },
   stockBadge: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
+  statusRow: { flexDirection: 'row', alignItems: 'flex-start', marginTop: 8, flexWrap: 'wrap' },
+  rejectionBox: { marginTop: 12, padding: 12, borderRadius: 8, borderWidth: 1, borderColor: '#fca5a5' },
+  rejectionHeader: { flexDirection: 'row', alignItems: 'center' },
+  actionDivider: { marginTop: 12, marginBottom: 8 },
+  productActions: { flexDirection: 'row', gap: 8, justifyContent: 'flex-end' },
+  actionBtn: { flex: 1 },
   fab: { position: 'absolute', right: 16, bottom: 16 },
 });

@@ -130,37 +130,32 @@ export default function AccountScreen() {
 
         <List.Section>
           <List.Subheader>Actions</List.Subheader>
-          <List.Item
-            title={t('orders')}
-            description="View your order history"
-            left={(props) => <List.Icon {...props} icon="package-variant" />}
-            right={(props) => <List.Icon {...props} icon="chevron-right" />}
-            onPress={() => router.push('/orders')}
-          />
-          <List.Item
-            title={t('wishlist')}
-            description="View saved products"
-            left={(props) => <List.Icon {...props} icon="heart" />}
-            right={(props) => <List.Icon {...props} icon="chevron-right" />}
-            onPress={() => {}}
-          />
-          {user?.role === 'supplier' && (
+          {user?.role === 'manufacturer' && (
             <>
               <List.Item
-                title="My Products"
-                description="Manage your products"
-                left={(props) => <List.Icon {...props} icon="package" />}
+                title={t('orders')}
+                description="View your order history"
+                left={(props) => <List.Icon {...props} icon="package-variant" />}
+                right={(props) => <List.Icon {...props} icon="chevron-right" />}
+                onPress={() => router.push('/orders')}
+              />
+              <List.Item
+                title={t('wishlist')}
+                description="View saved products"
+                left={(props) => <List.Icon {...props} icon="heart" />}
                 right={(props) => <List.Icon {...props} icon="chevron-right" />}
                 onPress={() => {}}
               />
-              <List.Item
-                title="Verification Documents"
-                description="Upload business documents"
-                left={(props) => <List.Icon {...props} icon="file-document" />}
-                right={(props) => <List.Icon {...props} icon="chevron-right" />}
-                onPress={() => router.push('/upload-verification')}
-              />
             </>
+          )}
+          {user?.role === 'supplier' && (
+            <List.Item
+              title="Verification Documents"
+              description="Upload business documents"
+              left={(props) => <List.Icon {...props} icon="file-document" />}
+              right={(props) => <List.Icon {...props} icon="chevron-right" />}
+              onPress={() => router.push('/upload-verification')}
+            />
           )}
           <List.Item
             title="Complete Profile"
