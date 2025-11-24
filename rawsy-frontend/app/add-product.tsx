@@ -17,6 +17,7 @@ import * as ImagePicker from 'expo-image-picker';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 
 const CATEGORIES = [
+  'Agriculture',
   'Cotton',
   'Leather',
   'Fabric',

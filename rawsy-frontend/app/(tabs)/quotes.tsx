@@ -8,15 +8,15 @@ import {
   Button,
   Divider,
 } from 'react-native-paper';
-import { useTheme } from '../context/ThemeContext';
-import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
+import { useAuth } from '../../context/AuthContext';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import api from '../services/api';
-import SupplierQuoteResponseDialog from '../components/SupplierQuoteResponseDialog';
-import OrderFromQuoteDialog from '../components/OrderFromQuoteDialog';
-import PaymentUploadDialog from '../components/PaymentUploadDialog';
+import api from '../../services/api';
+import SupplierQuoteResponseDialog from '../../components/SupplierQuoteResponseDialog';
+import OrderFromQuoteDialog from '../../components/OrderFromQuoteDialog';
+import PaymentUploadDialog from '../../components/PaymentUploadDialog';
 
 export default function QuotesScreen() {
   const { theme } = useTheme();
