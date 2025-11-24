@@ -61,15 +61,7 @@ export default function TabsLayout() {
           title: t('account'),
           tabBarIcon: ({ color, size }) => <MaterialIcons name="account-circle" size={size} color={color} />,
         }}
-      />
-      {/* Placeholder for Profile if needed later */}
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: t('profile'),
-          tabBarIcon: ({ color, size }) => <MaterialIcons name="person" size={size} color={color} />,
-        }}
-      />
+      />      
     </Tabs>
   );
 }

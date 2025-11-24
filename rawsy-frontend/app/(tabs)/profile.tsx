@@ -1,3 +1,4 @@
+/*
 import { View, StyleSheet } from 'react-native';
 import { Text, Button, Avatar, useTheme as usePaperTheme } from 'react-native-paper';
 import { useAuth } from '../../context/AuthContext';
@@ -96,3 +97,4 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
 });
+*/
