@@ -149,21 +149,44 @@ export default function UploadVerificationScreen() {
         const extension = selectedFile.uri.split('.').pop()?.toLowerCase();
         if (extension === 'pdf') {
           mimeType = 'application/pdf';
+          if (!fileName.endsWith('.pdf')) {
+            fileName = `doc_${Date.now()}.pdf`;
+          }
         } else if (['jpg', 'jpeg'].includes(extension || '')) {
           mimeType = 'image/jpeg';
+          if (!fileName.match(/\.(jpg|jpeg)$/i)) {
+            fileName = `doc_${Date.now()}.jpg`;
+          }
         } else if (extension === 'png') {
           mimeType = 'image/png';
+          if (!fileName.endsWith('.png')) {
+            fileName = `doc_${Date.now()}.png`;
+          }
         }
       }
 
+      let fileUri = selectedFile.uri;
+      if (Platform.OS === 'ios' && fileUri.startsWith('file://')) {
+        fileUri = fileUri;
+      } else if (Platform.OS === 'android' && !fileUri.startsWith('file://')) {
+        fileUri = 'file://' + fileUri;
+      }
+
       const fileToUpload: any = {
-        uri: Platform.OS === 'ios' ? selectedFile.uri.replace('file://', '') : selectedFile.uri,
+        uri: fileUri,
         type: mimeType,
         name: fileName,
       };
 
       formData.append('file', fileToUpload);
       formData.append('type', selectedDocType);
+
+      console.log('Uploading file:', {
+        uri: fileUri,
+        type: mimeType,
+        name: fileName,
+        docType: selectedDocType,
+      });
 
       await api.post('/auth/me/upload-doc', formData, {
         headers: {
@@ -187,6 +210,7 @@ export default function UploadVerificationScreen() {
       await refreshUser();
     } catch (error: any) {
       console.error('Upload error:', error);
+      console.error('Upload error response:', error.response?.data);
       const errorMessage = error.response?.data?.error || 'Failed to upload document. Please try again.';
       Alert.alert('Upload Failed', errorMessage);
     } finally {
