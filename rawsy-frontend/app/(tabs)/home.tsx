@@ -279,6 +279,13 @@ function SupplierDashboard({ homeData, refreshing, onRefresh }: any) {
   const { theme } = useTheme();
   const router = useRouter();
 
+  const quickActions = [
+    { icon: "inventory", label: "My Products", screen: "/products", color: theme.colors.primary },
+    { icon: "add-circle", label: "Add Product", screen: "/add-product", color: "#10b981" },
+    { icon: "receipt", label: "Orders", screen: "/orders", color: "#f59e0b" },
+    { icon: "request-quote", label: "Quotes", screen: "/quotes", color: "#8b5cf6" },
+  ];
+
   if (user?.status === "pending") {
     return (
       <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
@@ -325,7 +332,32 @@ function SupplierDashboard({ homeData, refreshing, onRefresh }: any) {
           <Text variant="headlineSmall" style={styles.welcomeTitle}>
             Welcome, {user?.name}!
           </Text>
+          <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, marginTop: 4 }}>
+            Manage your products and orders
+          </Text>
         </Surface>
+
+        <View style={styles.section}>
+          <Text variant="titleLarge" style={styles.sectionTitle}>
+            Quick Actions
+          </Text>
+          <View style={styles.actionsGrid}>
+            {quickActions.map((action, index) => (
+              <Card
+                key={index}
+                style={[styles.actionCard, { backgroundColor: theme.colors.surface }]}
+                onPress={() => router.push(action.screen as any)}
+              >
+                <Card.Content style={styles.actionContent}>
+                  <MaterialIcons name={action.icon as any} size={32} color={action.color} />
+                  <Text variant="bodyMedium" style={[styles.actionLabel, { color: theme.colors.onSurface }]}>
+                    {action.label}
+                  </Text>
+                </Card.Content>
+              </Card>
+            ))}
+          </View>
+        </View>
 
         <Surface style={[styles.statsCard, { backgroundColor: theme.colors.surface }]} elevation={1}>
           <Text variant="titleLarge" style={[styles.sectionTitle, { marginBottom: 16 }]}>
@@ -370,12 +402,23 @@ function SupplierDashboard({ homeData, refreshing, onRefresh }: any) {
               </View>
               {homeData.rejectedProducts.map((product: any, index: number) => (
                 <View key={index} style={styles.rejectedItem}>
-                  <Text variant="bodyMedium" style={{ fontWeight: '600' }}>
-                    {product.name}
-                  </Text>
-                  <Text variant="bodySmall" style={{ color: '#991b1b', marginTop: 4 }}>
-                    Reason: {product.rejectionReason}
-                  </Text>
+                  <View style={{ flex: 1 }}>
+                    <Text variant="bodyMedium" style={{ fontWeight: '600' }}>
+                      {product.name}
+                    </Text>
+                    <Text variant="bodySmall" style={{ color: '#991b1b', marginTop: 4 }}>
+                      Reason: {product.rejectionReason}
+                    </Text>
+                  </View>
+                  <Button
+                    mode="contained"
+                    onPress={() => router.push({ pathname: '/edit-product', params: { id: product._id } })}
+                    buttonColor="#dc2626"
+                    compact
+                    style={{ marginTop: 8 }}
+                  >
+                    Edit Product
+                  </Button>
                 </View>
               ))}
             </Card.Content>
@@ -515,7 +558,7 @@ const styles = StyleSheet.create({
   statBox: { alignItems: 'center', flex: 1 },
   statValue: { fontWeight: 'bold' },
   statLabel: { color: '#6b7280', marginTop: 4, textAlign: 'center' },
-  rejectedItem: { marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: '#fca5a5' },
+  rejectedItem: { marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: '#fca5a5', flexDirection: 'column' },
   lowStockItem: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 },
   quoteCard: { marginBottom: 12 },
   quoteRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },

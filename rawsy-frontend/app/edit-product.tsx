@@ -55,7 +55,14 @@ export default function EditProductScreen() {
     try {
       setLoading(true);
       const response = await api.get(`/products/${id}`);
-      const product = response.data;
+      console.log('Product response:', response.data);
+
+      // Handle both response.data and response.data.product structures
+      const product = response.data?.product || response.data;
+
+      if (!product || !product._id) {
+        throw new Error('Product not found');
+      }
 
       setName(product.name || '');
       setDescription(product.description || '');
@@ -65,7 +72,9 @@ export default function EditProductScreen() {
       setStock(String(product.stock || ''));
       setNegotiable(product.negotiable || false);
     } catch (err: any) {
-      Alert.alert('Error', 'Failed to load product details');
+      console.error('Error fetching product:', err);
+      const errorMsg = err.response?.data?.error || err.message || 'Failed to load product details';
+      Alert.alert('Error', errorMsg);
       router.back();
     } finally {
       setLoading(false);
