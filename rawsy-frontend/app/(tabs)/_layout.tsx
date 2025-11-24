@@ -6,7 +6,7 @@ import { ActivityIndicator, View } from 'react-native';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 
 export default function TabsLayout() {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, user } = useAuth();
   const { theme } = useTheme();
   const { t } = useLanguage();
 
@@ -21,6 +21,9 @@ export default function TabsLayout() {
   if (!isAuthenticated) {
     return <Redirect href="/(auth)/login" />;
   }
+
+  const isSupplier = user?.role === 'supplier';
+  const isManufacturer = user?.role === 'manufacturer';
 
   return (
     <Tabs
@@ -48,20 +51,40 @@ export default function TabsLayout() {
           tabBarIcon: ({ color, size }) => <MaterialIcons name="inventory" size={size} color={color} />,
         }}
       />
-      <Tabs.Screen
-        name="cart"
-        options={{
-          title: t('cart'),
-          tabBarIcon: ({ color, size }) => <MaterialIcons name="shopping-cart" size={size} color={color} />,
-        }}
-      />
+      {isSupplier && (
+        <Tabs.Screen
+          name="orders"
+          options={{
+            title: t('orders'),
+            tabBarIcon: ({ color, size }) => <MaterialIcons name="receipt" size={size} color={color} />,
+          }}
+        />
+      )}
+      {isSupplier && (
+        <Tabs.Screen
+          name="quotes"
+          options={{
+            title: t('quotes'),
+            tabBarIcon: ({ color, size }) => <MaterialIcons name="request-quote" size={size} color={color} />,
+          }}
+        />
+      )}
+      {isManufacturer && (
+        <Tabs.Screen
+          name="cart"
+          options={{
+            title: t('cart'),
+            tabBarIcon: ({ color, size }) => <MaterialIcons name="shopping-cart" size={size} color={color} />,
+          }}
+        />
+      )}
       <Tabs.Screen
         name="account"
         options={{
           title: t('account'),
           tabBarIcon: ({ color, size }) => <MaterialIcons name="account-circle" size={size} color={color} />,
         }}
-      />      
+      />
     </Tabs>
   );
 }
