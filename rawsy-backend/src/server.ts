@@ -15,7 +15,7 @@ import adminMetricsRoutes from "./modules/admin/admin.routes";
 import reviewRoutes from "./modules/reviews/review.routes";
 import quoteRoutes from "./modules/quotes/quote.routes";
 import supportRoutes from "./modules/support/support.routes";
-
+import homeRoutes from "./modules/home/home.routes";
 
 const app = express();
 
@@ -34,6 +34,7 @@ app.use("/api/admin", adminMetricsRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/quotes", quoteRoutes);
 app.use("/api/support", supportRoutes);
+app.use("/api/home", homeRoutes);
 // Connect to MongoDB
 connectDB();
 
