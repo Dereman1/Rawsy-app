@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, Alert, Image } from 'react-native';
+import { View, StyleSheet, ScrollView, Alert, Image, Platform } from 'react-native';
 import {
   Text,
   Button,
@@ -9,12 +9,19 @@ import {
   IconButton,
   ActivityIndicator,
   Card,
+  Dialog,
+  Portal,
+  RadioButton,
+  ProgressBar,
+  Menu,
+  Divider as PaperDivider,
 } from 'react-native-paper';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import api from '../services/api';
 
 export default function UploadVerificationScreen() {
@@ -25,6 +32,19 @@ export default function UploadVerificationScreen() {
   const [documents, setDocuments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [showDocTypeDialog, setShowDocTypeDialog] = useState(false);
+  const [selectedDocType, setSelectedDocType] = useState('business_license');
+  const [showUploadMenu, setShowUploadMenu] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<any>(null);
+
+  const documentTypes = [
+    { value: 'business_license', label: 'Business License' },
+    { value: 'tax_document', label: 'Tax Document' },
+    { value: 'identification', label: 'Identification (ID/Passport)' },
+    { value: 'company_registration', label: 'Company Registration' },
+    { value: 'other', label: 'Other Document' },
+  ];
 
   useEffect(() => {
     fetchDocuments();
@@ -51,61 +71,164 @@ export default function UploadVerificationScreen() {
       });
 
       if (!result.canceled && result.assets[0]) {
-        await uploadDocument(result.assets[0]);
+        setSelectedFile(result.assets[0]);
+        setShowDocTypeDialog(true);
       }
     } catch (error) {
       console.error('Error picking document:', error);
-      Alert.alert('Error', 'Failed to pick document');
+      Alert.alert('Error', 'Failed to pick document. Please try again.');
     }
   };
 
   const pickImage = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
-    if (status !== 'granted') {
-      Alert.alert('Permission Required', 'Please grant access to photos');
-      return;
-    }
+      if (status !== 'granted') {
+        Alert.alert('Permission Required', 'Please grant access to photos to upload verification documents.');
+        return;
+      }
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.8,
-    });
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        quality: 0.8,
+        allowsEditing: false,
+        exif: false,
+      });
 
-    if (!result.canceled && result.assets[0]) {
-      await uploadDocument(result.assets[0]);
+      if (!result.canceled && result.assets[0]) {
+        setSelectedFile(result.assets[0]);
+        setShowDocTypeDialog(true);
+      }
+    } catch (error) {
+      console.error('Error picking image:', error);
+      Alert.alert('Error', 'Failed to select image. Please try again.');
     }
   };
 
-  const uploadDocument = async (file: any) => {
+  const takePhoto = async () => {
+    try {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+
+      if (status !== 'granted') {
+        Alert.alert('Permission Required', 'Please grant camera access to take photos of your documents.');
+        return;
+      }
+
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        quality: 0.8,
+        allowsEditing: false,
+        exif: false,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        setSelectedFile(result.assets[0]);
+        setShowDocTypeDialog(true);
+      }
+    } catch (error) {
+      console.error('Error taking photo:', error);
+      Alert.alert('Error', 'Failed to take photo. Please try again.');
+    }
+  };
+
+  const uploadDocument = async () => {
+    if (!selectedFile) return;
+
     try {
       setUploading(true);
+      setUploadProgress(0);
+      setShowDocTypeDialog(false);
 
       const formData = new FormData();
+
+      let mimeType = selectedFile.mimeType || selectedFile.type || 'image/jpeg';
+      let fileName = selectedFile.name || selectedFile.fileName || `doc_${Date.now()}.jpg`;
+
+      if (selectedFile.uri && !mimeType.includes('/')) {
+        const extension = selectedFile.uri.split('.').pop()?.toLowerCase();
+        if (extension === 'pdf') {
+          mimeType = 'application/pdf';
+        } else if (['jpg', 'jpeg'].includes(extension || '')) {
+          mimeType = 'image/jpeg';
+        } else if (extension === 'png') {
+          mimeType = 'image/png';
+        }
+      }
+
       const fileToUpload: any = {
-        uri: file.uri,
-        type: file.mimeType || 'image/jpeg',
-        name: file.name || `doc_${Date.now()}.jpg`,
+        uri: Platform.OS === 'ios' ? selectedFile.uri.replace('file://', '') : selectedFile.uri,
+        type: mimeType,
+        name: fileName,
       };
 
       formData.append('file', fileToUpload);
-      formData.append('type', 'business_doc');
+      formData.append('type', selectedDocType);
 
       await api.post('/auth/me/upload-doc', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
+        onUploadProgress: (progressEvent) => {
+          const progress = progressEvent.total
+            ? (progressEvent.loaded / progressEvent.total)
+            : 0;
+          setUploadProgress(progress);
+        },
       });
 
-      Alert.alert('Success', 'Document uploaded successfully');
+      Alert.alert(
+        'Success',
+        'Document uploaded successfully. Admin will review it shortly.',
+        [{ text: 'OK', onPress: () => setSelectedFile(null) }]
+      );
+
       await fetchDocuments();
       await refreshUser();
     } catch (error: any) {
       console.error('Upload error:', error);
-      Alert.alert('Error', error.response?.data?.error || 'Failed to upload document');
+      const errorMessage = error.response?.data?.error || 'Failed to upload document. Please try again.';
+      Alert.alert('Upload Failed', errorMessage);
     } finally {
       setUploading(false);
+      setUploadProgress(0);
     }
+  };
+
+  const handleUploadMenuOpen = () => {
+    setShowUploadMenu(true);
+  };
+
+  const handleUploadMenuClose = () => {
+    setShowUploadMenu(false);
+  };
+
+  const handleCancelUpload = () => {
+    setShowDocTypeDialog(false);
+    setSelectedFile(null);
+  };
+
+  const getDocumentTypeLabel = (type: string) => {
+    const docType = documentTypes.find(dt => dt.value === type);
+    return docType?.label || type.replace('_', ' ');
+  };
+
+  const deleteDocument = async (docIndex: number) => {
+    Alert.alert(
+      'Delete Document',
+      'Are you sure you want to delete this document? This action cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            console.log('Delete functionality to be implemented');
+            Alert.alert('Info', 'Document deletion feature coming soon. Contact admin to remove documents.');
+          },
+        },
+      ]
+    );
   };
 
   const getStatusColor = (status: string) => {
@@ -163,30 +286,63 @@ export default function UploadVerificationScreen() {
         </Surface>
 
         <View style={styles.uploadSection}>
-          <Button
-            mode="contained"
-            icon="camera"
-            onPress={pickImage}
-            disabled={uploading}
-            style={styles.uploadButton}
-          >
-            Upload Image
-          </Button>
-          <Button
-            mode="outlined"
-            icon="file-document"
-            onPress={pickDocument}
-            disabled={uploading}
-            style={styles.uploadButton}
-          >
-            Upload Document
-          </Button>
+          <Surface style={[styles.uploadCard, { backgroundColor: theme.colors.surface }]} elevation={2}>
+            <MaterialIcons name="cloud-upload" size={48} color={theme.colors.primary} style={styles.uploadIcon} />
+            <Text variant="titleMedium" style={styles.uploadTitle}>
+              Upload Verification Documents
+            </Text>
+            <Text variant="bodySmall" style={[styles.uploadSubtitle, { color: theme.colors.onSurfaceVariant }]}>
+              Accepted formats: JPG, PNG, PDF (Max 5MB)
+            </Text>
+
+            <View style={styles.uploadButtonsRow}>
+              <Button
+                mode="contained"
+                icon="camera"
+                onPress={takePhoto}
+                disabled={uploading}
+                style={styles.uploadActionButton}
+              >
+                Take Photo
+              </Button>
+              <Button
+                mode="outlined"
+                icon="image"
+                onPress={pickImage}
+                disabled={uploading}
+                style={styles.uploadActionButton}
+              >
+                Gallery
+              </Button>
+            </View>
+            <Button
+              mode="outlined"
+              icon="file-document"
+              onPress={pickDocument}
+              disabled={uploading}
+              style={styles.uploadButton}
+            >
+              Choose Document
+            </Button>
+          </Surface>
         </View>
 
         {uploading && (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={theme.colors.primary} />
-            <Text variant="bodyMedium" style={{ marginTop: 8 }}>Uploading...</Text>
+          <View style={styles.uploadingContainer}>
+            <Surface style={[styles.uploadingCard, { backgroundColor: theme.colors.surface }]} elevation={1}>
+              <MaterialIcons name="upload-file" size={48} color={theme.colors.primary} />
+              <Text variant="titleMedium" style={styles.uploadingTitle}>
+                Uploading Document...
+              </Text>
+              <ProgressBar
+                progress={uploadProgress}
+                color={theme.colors.primary}
+                style={styles.progressBar}
+              />
+              <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 8 }}>
+                {Math.round(uploadProgress * 100)}% complete
+              </Text>
+            </Surface>
           </View>
         )}
 
@@ -214,24 +370,43 @@ export default function UploadVerificationScreen() {
                 <Card.Content>
                   <View style={styles.documentHeader}>
                     <View style={styles.documentInfo}>
-                      <Text variant="titleSmall">Document {index + 1}</Text>
-                      <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                        {doc.type || 'Business Document'}
-                      </Text>
-                      <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                      <View style={styles.documentTitleRow}>
+                        <MaterialIcons
+                          name={doc.url?.includes('.pdf') ? 'picture-as-pdf' : 'image'}
+                          size={24}
+                          color={theme.colors.primary}
+                        />
+                        <Text variant="titleMedium" style={styles.documentTitle}>
+                          {getDocumentTypeLabel(doc.type)}
+                        </Text>
+                      </View>
+                      <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 4 }}>
                         Uploaded: {new Date(doc.uploadedAt).toLocaleDateString()}
                       </Text>
                     </View>
-                    <Chip
-                      style={{ backgroundColor: getStatusColor(doc.status) }}
-                      textStyle={{ color: '#fff' }}
-                    >
-                      {getStatusLabel(doc.status)}
-                    </Chip>
+                    <View style={styles.documentActions}>
+                      <Chip
+                        style={{ backgroundColor: getStatusColor(doc.status), marginBottom: 8 }}
+                        textStyle={{ color: '#fff', fontSize: 11 }}
+                      >
+                        {getStatusLabel(doc.status)}
+                      </Chip>
+                    </View>
                   </View>
 
                   {doc.url && doc.url.includes('image') && (
-                    <Image source={{ uri: doc.url }} style={styles.documentPreview} />
+                    <Surface style={styles.imagePreviewContainer} elevation={0}>
+                      <Image source={{ uri: doc.url }} style={styles.documentPreview} />
+                    </Surface>
+                  )}
+
+                  {doc.url && doc.url.includes('.pdf') && (
+                    <Surface style={[styles.pdfIndicator, { backgroundColor: theme.colors.surfaceVariant }]} elevation={0}>
+                      <MaterialIcons name="picture-as-pdf" size={32} color="#dc2626" />
+                      <Text variant="bodySmall" style={{ color: theme.colors.onSurface, marginTop: 4 }}>
+                        PDF Document
+                      </Text>
+                    </Surface>
                   )}
                 </Card.Content>
               </Card>
@@ -239,6 +414,44 @@ export default function UploadVerificationScreen() {
           </View>
         )}
       </ScrollView>
+
+      <Portal>
+        <Dialog visible={showDocTypeDialog} onDismiss={handleCancelUpload}>
+          <Dialog.Title>Select Document Type</Dialog.Title>
+          <Dialog.Content>
+            <Text variant="bodyMedium" style={{ marginBottom: 16 }}>
+              What type of document are you uploading?
+            </Text>
+            <RadioButton.Group
+              onValueChange={value => setSelectedDocType(value)}
+              value={selectedDocType}
+            >
+              {documentTypes.map((docType) => (
+                <View key={docType.value} style={styles.radioItem}>
+                  <RadioButton.Android value={docType.value} />
+                  <Text
+                    variant="bodyMedium"
+                    style={styles.radioLabel}
+                    onPress={() => setSelectedDocType(docType.value)}
+                  >
+                    {docType.label}
+                  </Text>
+                </View>
+              ))}
+            </RadioButton.Group>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={handleCancelUpload}>Cancel</Button>
+            <Button
+              mode="contained"
+              onPress={uploadDocument}
+              disabled={!selectedDocType}
+            >
+              Upload
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
     </View>
   );
 }
@@ -267,10 +480,55 @@ const styles = StyleSheet.create({
   },
   uploadSection: {
     padding: 16,
+  },
+  uploadCard: {
+    padding: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  uploadIcon: {
+    marginBottom: 16,
+  },
+  uploadTitle: {
+    fontWeight: 'bold',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  uploadSubtitle: {
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  uploadButtonsRow: {
+    flexDirection: 'row',
     gap: 12,
+    marginBottom: 12,
+    width: '100%',
+  },
+  uploadActionButton: {
+    flex: 1,
+    paddingVertical: 4,
   },
   uploadButton: {
-    paddingVertical: 8,
+    paddingVertical: 4,
+    width: '100%',
+  },
+  uploadingContainer: {
+    padding: 16,
+  },
+  uploadingCard: {
+    padding: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  uploadingTitle: {
+    fontWeight: '600',
+    marginTop: 16,
+    marginBottom: 16,
+  },
+  progressBar: {
+    width: '100%',
+    height: 8,
+    borderRadius: 4,
   },
   loadingContainer: {
     padding: 32,
@@ -300,11 +558,41 @@ const styles = StyleSheet.create({
     flex: 1,
     marginRight: 12,
   },
+  documentTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  documentTitle: {
+    fontWeight: '600',
+    flex: 1,
+  },
+  documentActions: {
+    alignItems: 'flex-end',
+  },
+  imagePreviewContainer: {
+    borderRadius: 8,
+    overflow: 'hidden',
+    marginTop: 12,
+  },
   documentPreview: {
     width: '100%',
     height: 200,
-    borderRadius: 8,
-    marginTop: 12,
     resizeMode: 'cover',
+  },
+  pdfIndicator: {
+    padding: 24,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  radioItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  radioLabel: {
+    flex: 1,
+    marginLeft: 8,
   },
 });
