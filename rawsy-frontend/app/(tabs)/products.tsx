@@ -479,19 +479,21 @@ function SupplierProductsView() {
                   <Divider style={styles.actionDivider} />
 
                   <View style={styles.productActions}>
-                    <Button
-                      mode="outlined"
-                      onPress={() => handleEditProduct(product)}
-                      style={styles.actionBtn}
-                      icon="pencil"
-                      compact
-                    >
-                      Edit
-                    </Button>
+                    {product.status !== 'pending' && (
+                      <Button
+                        mode="outlined"
+                        onPress={() => handleEditProduct(product)}
+                        style={styles.actionBtn}
+                        icon="pencil"
+                        compact
+                      >
+                        Edit
+                      </Button>
+                    )}
                     <Button
                       mode="outlined"
                       onPress={() => handleDeleteProduct(product._id)}
-                      style={styles.actionBtn}
+                      style={[styles.actionBtn, product.status === 'pending' && styles.fullWidthBtn]}
                       buttonColor="#fee2e2"
                       textColor="#dc2626"
                       icon="delete"
@@ -574,5 +576,6 @@ const styles = StyleSheet.create({
   actionDivider: { marginTop: 12, marginBottom: 8 },
   productActions: { flexDirection: 'row', gap: 8, justifyContent: 'flex-end' },
   actionBtn: { flex: 1 },
+  fullWidthBtn: { flex: 1, maxWidth: '100%' },
   fab: { position: 'absolute', right: 16, bottom: 16 },
 });

@@ -280,10 +280,10 @@ function SupplierDashboard({ homeData, refreshing, onRefresh }: any) {
   const router = useRouter();
 
   const quickActions = [
-    { icon: "inventory", label: "My Products", screen: "/products", color: theme.colors.primary },
-    { icon: "add-circle", label: "Add Product", screen: "/add-product", color: "#10b981" },
-    { icon: "receipt", label: "Orders", screen: "/orders", color: "#f59e0b" },
-    { icon: "request-quote", label: "Quotes", screen: "/quotes", color: "#8b5cf6" },
+    { icon: "inventory-2", label: "My Products", screen: "/products", color: theme.colors.primary, bg: '#dbeafe' },
+    { icon: "add-box", label: "Add Product", screen: "/add-product", color: "#10b981", bg: '#d1fae5' },
+    { icon: "receipt-long", label: "Orders", screen: "/orders", color: "#f59e0b", bg: '#fef3c7' },
+    { icon: "chat-bubble", label: "Quotes", screen: "/quotes", color: "#8b5cf6", bg: '#ede9fe' },
   ];
 
   if (user?.status === "pending") {
@@ -328,13 +328,23 @@ function SupplierDashboard({ homeData, refreshing, onRefresh }: any) {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[theme.colors.primary]} />
         }
       >
-        <Surface style={[styles.welcomeCard, { backgroundColor: theme.colors.surface }]} elevation={1}>
-          <Text variant="headlineSmall" style={styles.welcomeTitle}>
-            Welcome, {user?.name}!
-          </Text>
-          <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, marginTop: 4 }}>
-            Manage your products and orders
-          </Text>
+        <Surface style={[styles.welcomeCard, { backgroundColor: theme.colors.surface }]} elevation={2}>
+          <View style={styles.welcomeHeader}>
+            <View style={styles.welcomeTextContainer}>
+              <Text variant="headlineSmall" style={styles.welcomeTitle}>
+                Welcome back, {user?.name}!
+              </Text>
+              <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, marginTop: 4 }}>
+                Manage your business operations
+              </Text>
+            </View>
+            <Avatar.Text
+              size={56}
+              label={user?.name?.charAt(0).toUpperCase() || 'S'}
+              style={{ backgroundColor: theme.colors.primary }}
+              color="#fff"
+            />
+          </View>
         </Surface>
 
         <View style={styles.section}>
@@ -347,9 +357,12 @@ function SupplierDashboard({ homeData, refreshing, onRefresh }: any) {
                 key={index}
                 style={[styles.actionCard, { backgroundColor: theme.colors.surface }]}
                 onPress={() => router.push(action.screen as any)}
+                elevation={2}
               >
                 <Card.Content style={styles.actionContent}>
-                  <MaterialIcons name={action.icon as any} size={32} color={action.color} />
+                  <View style={[styles.actionIconContainer, { backgroundColor: action.bg }]}>
+                    <MaterialIcons name={action.icon as any} size={28} color={action.color} />
+                  </View>
                   <Text variant="bodyMedium" style={[styles.actionLabel, { color: theme.colors.onSurface }]}>
                     {action.label}
                   </Text>
@@ -359,35 +372,44 @@ function SupplierDashboard({ homeData, refreshing, onRefresh }: any) {
           </View>
         </View>
 
-        <Surface style={[styles.statsCard, { backgroundColor: theme.colors.surface }]} elevation={1}>
+        <Surface style={[styles.statsCard, { backgroundColor: theme.colors.surface }]} elevation={2}>
           <Text variant="titleLarge" style={[styles.sectionTitle, { marginBottom: 16 }]}>
             Business Overview
           </Text>
           <View style={styles.statsGrid}>
-            <View style={styles.statBox}>
-              <Text variant="displaySmall" style={[styles.statValue, { color: theme.colors.primary }]}>
-                {homeData?.overview?.totalProducts || 0}
-              </Text>
-              <Text variant="bodySmall" style={styles.statLabel}>Total Products</Text>
-              <Text variant="bodySmall" style={{ color: '#10b981', marginTop: 4 }}>
-                {homeData?.overview?.approvedProducts || 0} Approved
-              </Text>
-            </View>
-            <View style={styles.statBox}>
-              <Text variant="displaySmall" style={[styles.statValue, { color: theme.colors.secondary }]}>
-                {homeData?.overview?.totalOrders || 0}
-              </Text>
-              <Text variant="bodySmall" style={styles.statLabel}>Total Orders</Text>
-              <Text variant="bodySmall" style={{ color: '#f59e0b', marginTop: 4 }}>
-                {homeData?.overview?.activeOrders || 0} Active
-              </Text>
-            </View>
-            <View style={styles.statBox}>
-              <Text variant="displaySmall" style={[styles.statValue, { color: theme.colors.tertiary }]}>
-                {homeData?.overview?.totalRevenue || 0}
-              </Text>
-              <Text variant="bodySmall" style={styles.statLabel}>Revenue (ETB)</Text>
-            </View>
+            <Card style={[styles.statCard, { backgroundColor: '#dbeafe' }]} elevation={0}>
+              <Card.Content style={styles.statCardContent}>
+                <MaterialIcons name="inventory-2" size={32} color={theme.colors.primary} />
+                <Text variant="headlineMedium" style={[styles.statValue, { color: theme.colors.primary }]}>
+                  {homeData?.overview?.totalProducts || 0}
+                </Text>
+                <Text variant="bodySmall" style={styles.statLabel}>Total Products</Text>
+                <Text variant="bodySmall" style={{ color: '#10b981', marginTop: 4, fontWeight: '600' }}>
+                  {homeData?.overview?.approvedProducts || 0} Approved
+                </Text>
+              </Card.Content>
+            </Card>
+            <Card style={[styles.statCard, { backgroundColor: '#fef3c7' }]} elevation={0}>
+              <Card.Content style={styles.statCardContent}>
+                <MaterialIcons name="receipt-long" size={32} color="#f59e0b" />
+                <Text variant="headlineMedium" style={[styles.statValue, { color: '#f59e0b' }]}>
+                  {homeData?.overview?.totalOrders || 0}
+                </Text>
+                <Text variant="bodySmall" style={styles.statLabel}>Total Orders</Text>
+                <Text variant="bodySmall" style={{ color: '#f59e0b', marginTop: 4, fontWeight: '600' }}>
+                  {homeData?.overview?.activeOrders || 0} Active
+                </Text>
+              </Card.Content>
+            </Card>
+            <Card style={[styles.statCard, { backgroundColor: '#d1fae5' }]} elevation={0}>
+              <Card.Content style={styles.statCardContent}>
+                <MaterialIcons name="payments" size={32} color="#10b981" />
+                <Text variant="headlineMedium" style={[styles.statValue, { color: '#10b981' }]}>
+                  {homeData?.overview?.totalRevenue || 0}
+                </Text>
+                <Text variant="bodySmall" style={styles.statLabel}>Revenue (ETB)</Text>
+              </Card.Content>
+            </Card>
           </View>
         </Surface>
 
@@ -525,9 +547,12 @@ const styles = StyleSheet.create({
   sectionTitle: { fontWeight: "bold", marginBottom: 12 },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   actionsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
-  actionCard: { width: "47%", minHeight: 100 },
-  actionContent: { alignItems: "center", justifyContent: "center", padding: 8 },
-  actionLabel: { textAlign: "center", marginTop: 8 },
+  actionCard: { width: "47%", minHeight: 110 },
+  actionContent: { alignItems: "center", justifyContent: "center", padding: 12 },
+  actionIconContainer: { width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
+  actionLabel: { textAlign: "center", marginTop: 4, fontWeight: '500' },
+  welcomeHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  welcomeTextContainer: { flex: 1, marginRight: 12 },
   horizontalScroll: { marginTop: 8 },
   productCard: { width: 150, marginRight: 12 },
   productImage: { height: 120 },
@@ -554,10 +579,12 @@ const styles = StyleSheet.create({
   alertHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
   alertTitle: { fontWeight: '600' },
   statsCard: { margin: 16, padding: 16, borderRadius: 12 },
-  statsGrid: { flexDirection: 'row', justifyContent: 'space-between' },
+  statsGrid: { flexDirection: 'row', gap: 12 },
   statBox: { alignItems: 'center', flex: 1 },
-  statValue: { fontWeight: 'bold' },
-  statLabel: { color: '#6b7280', marginTop: 4, textAlign: 'center' },
+  statCard: { flex: 1, borderRadius: 12 },
+  statCardContent: { alignItems: 'center', paddingVertical: 8 },
+  statValue: { fontWeight: 'bold', marginTop: 8 },
+  statLabel: { color: '#6b7280', marginTop: 4, textAlign: 'center', fontSize: 11 },
   rejectedItem: { marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: '#fca5a5', flexDirection: 'column' },
   lowStockItem: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 },
   quoteCard: { marginBottom: 12 },

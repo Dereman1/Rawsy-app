@@ -41,14 +41,18 @@ export default function TabsLayout() {
         name="home"
         options={{
           title: t('home'),
-          tabBarIcon: ({ color, size }) => <MaterialIcons name="home" size={size} color={color} />,
+          tabBarIcon: ({ color, size, focused }) => (
+            <MaterialIcons name={focused ? "home" : "home-outlined"} size={size} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
         name="products"
         options={{
           title: t('products'),
-          tabBarIcon: ({ color, size }) => <MaterialIcons name="inventory" size={size} color={color} />,
+          tabBarIcon: ({ color, size, focused }) => (
+            <MaterialIcons name={focused ? "inventory-2" : "inventory-2"} size={size} color={color} />
+          ),
         }}
       />
       {isSupplier && (
@@ -56,7 +60,9 @@ export default function TabsLayout() {
           name="orders"
           options={{
             title: t('orders'),
-            tabBarIcon: ({ color, size }) => <MaterialIcons name="receipt" size={size} color={color} />,
+            tabBarIcon: ({ color, size, focused }) => (
+              <MaterialIcons name={focused ? "receipt-long" : "receipt-long"} size={size} color={color} />
+            ),
           }}
         />
       )}
@@ -65,7 +71,9 @@ export default function TabsLayout() {
           name="quotes"
           options={{
             title: t('quotes'),
-            tabBarIcon: ({ color, size }) => <MaterialIcons name="request-quote" size={size} color={color} />,
+            tabBarIcon: ({ color, size, focused }) => (
+              <MaterialIcons name={focused ? "chat-bubble" : "chat-bubble-outline"} size={size} color={color} />
+            ),
           }}
         />
       )}
@@ -74,7 +82,9 @@ export default function TabsLayout() {
           name="cart"
           options={{
             title: t('cart'),
-            tabBarIcon: ({ color, size }) => <MaterialIcons name="shopping-cart" size={size} color={color} />,
+            tabBarIcon: ({ color, size, focused }) => (
+              <MaterialIcons name={focused ? "shopping-cart" : "shopping-cart"} size={size} color={color} />
+            ),
           }}
         />
       )}
@@ -90,7 +100,9 @@ export default function TabsLayout() {
         name="account"
         options={{
           title: t('account'),
-          tabBarIcon: ({ color, size }) => <MaterialIcons name="account-circle" size={size} color={color} />,
+          tabBarIcon: ({ color, size, focused }) => (
+            <MaterialIcons name={focused ? "person" : "person-outline"} size={size} color={color} />
+          ),
         }}
       />
     </Tabs>
