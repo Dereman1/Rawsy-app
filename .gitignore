@@ -13,7 +13,7 @@ rawsy-frontend/.next/
 
 # Expo environment types
 rawsy-frontend/expo-env.d.ts
-
+rawsy-frontend/.env.example
 # Native
 .kotlin/
 *.orig.*

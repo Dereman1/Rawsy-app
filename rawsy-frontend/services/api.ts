@@ -5,10 +5,8 @@ import * as Device from "expo-device";
 
 // Detect correct base URL automatically (optional)
 //const LOCAL_IP = "10.19.18.42"; // change this to YOUR PC's IP
-const API_BASE_URL =`http://10.19.18.42:4000/api`;
- // Device.deviceName?.includes("Android") || Device.osName === "android"
-   // ? `http://${LOCAL_IP}:5000/api`
-    //: `http://localhost:5000/api`;
+const API_BASE_URL = process.env.API_BASE_URL ;
+ 
 
 const api = axios.create({
   baseURL: API_BASE_URL,
