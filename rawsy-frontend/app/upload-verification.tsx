@@ -142,7 +142,7 @@ export default function UploadVerificationScreen() {
 
       const formData = new FormData();
 
-      let mimeType = selectedFile.mimeType || selectedFile.type || 'image/jpeg';
+      let mimeType = selectedFile.mimeType || selectedFile.type || 'application/octet-stream';
       let fileName = selectedFile.name || selectedFile.fileName || `doc_${Date.now()}.jpg`;
 
       if (selectedFile.uri && !mimeType.includes('/')) {

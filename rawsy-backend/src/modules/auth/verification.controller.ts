@@ -44,7 +44,7 @@ export const uploadVerificationDoc = async (req: Request, res: Response) => {
           }
         }
       },
-      { new: true }
+      { new: true, runValidators: true }
     ).select("-password");
 
     if (!updated) {
