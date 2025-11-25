@@ -1,4 +1,4 @@
-import { View, StyleSheet, ScrollView, RefreshControl } from 'react-native';
+import { View, StyleSheet, ScrollView, RefreshControl, Alert } from 'react-native';
 import {
   Text,
   Appbar,
@@ -8,6 +8,8 @@ import {
   Button,
   Divider,
   Surface,
+  Menu,
+  Searchbar,
 } from 'react-native-paper';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
@@ -23,10 +25,15 @@ export default function OrdersScreen() {
   const router = useRouter();
 
   const [orders, setOrders] = useState<any[]>([]);
+  const [filteredOrders, setFilteredOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [filterMenuVisible, setFilterMenuVisible] = useState(false);
+  const [selectedFilter, setSelectedFilter] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [actioningOrderId, setActioningOrderId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchOrders();
@@ -37,11 +44,128 @@ export default function OrdersScreen() {
       setLoading(true);
       const endpoint = user?.role === 'supplier' ? '/orders/supplier-orders' : '/orders/my-orders';
       const response = await api.get(endpoint);
-      setOrders(response.data.orders || []);
+      const fetchedOrders = response.data.orders || [];
+
+      // Sort by newest first (for suppliers, show new orders at top)
+      const sortedOrders = [...fetchedOrders].sort((a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+
+      setOrders(sortedOrders);
+      applyFilters(sortedOrders, selectedFilter, searchQuery);
     } catch (error) {
       console.error('Error fetching orders:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const applyFilters = (orderList: any[], filter: string, search: string) => {
+    let filtered = [...orderList];
+
+    // Filter by status
+    if (filter === 'placed') {
+      filtered = filtered.filter(o => o.status === 'placed');
+    } else if (filter === 'confirmed') {
+      filtered = filtered.filter(o => o.status === 'confirmed');
+    } else if (filter === 'in_transit') {
+      filtered = filtered.filter(o => o.status === 'in_transit');
+    } else if (filter === 'delivered') {
+      filtered = filtered.filter(o => o.status === 'delivered');
+    } else if (filter === 'rejected') {
+      filtered = filtered.filter(o => o.status === 'rejected' || o.status === 'cancelled');
+    }
+
+    // Search by reference, buyer/supplier name, or product name
+    if (search) {
+      const lowerSearch = search.toLowerCase();
+      filtered = filtered.filter(o => {
+        const ref = o.reference?.toLowerCase() || '';
+        const buyerName = o.buyer?.name?.toLowerCase() || '';
+        const supplierName = o.supplier?.name?.toLowerCase() || '';
+        const productNames = o.items?.map((item: any) => item.name?.toLowerCase()).join(' ') || '';
+
+        return ref.includes(lowerSearch) ||
+               buyerName.includes(lowerSearch) ||
+               supplierName.includes(lowerSearch) ||
+               productNames.includes(lowerSearch);
+      });
+    }
+
+    setFilteredOrders(filtered);
+  };
+
+  useEffect(() => {
+    applyFilters(orders, selectedFilter, searchQuery);
+  }, [selectedFilter, searchQuery]);
+
+  const handleFilterChange = (filter: string) => {
+    setSelectedFilter(filter);
+    setFilterMenuVisible(false);
+  };
+
+  const handleAcceptOrder = async (orderId: string) => {
+    try {
+      setActioningOrderId(orderId);
+      await api.put(`/orders/${orderId}/accept`);
+      Alert.alert('Success', 'Order accepted successfully');
+      await fetchOrders();
+    } catch (error: any) {
+      Alert.alert('Error', error.response?.data?.error || 'Failed to accept order');
+    } finally {
+      setActioningOrderId(null);
+    }
+  };
+
+  const handleRejectOrder = async (orderId: string) => {
+    Alert.alert(
+      'Reject Order',
+      'Are you sure you want to reject this order?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Reject',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setActioningOrderId(orderId);
+              await api.put(`/orders/${orderId}/reject`);
+              Alert.alert('Success', 'Order rejected');
+              await fetchOrders();
+            } catch (error: any) {
+              Alert.alert('Error', error.response?.data?.error || 'Failed to reject order');
+            } finally {
+              setActioningOrderId(null);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleMarkShipped = async (orderId: string) => {
+    try {
+      setActioningOrderId(orderId);
+      await api.put(`/orders/${orderId}/ship`, {});
+      Alert.alert('Success', 'Order marked as shipped');
+      await fetchOrders();
+    } catch (error: any) {
+      Alert.alert('Error', error.response?.data?.error || 'Failed to mark as shipped');
+    } finally {
+      setActioningOrderId(null);
+    }
+  };
+
+  const handleMarkDelivered = async (orderId: string) => {
+    try {
+      setActioningOrderId(orderId);
+      await api.put(`/orders/${orderId}/deliver`);
+      Alert.alert('Success', 'Order marked as delivered');
+      await fetchOrders();
+    } catch (error: any) {
+      Alert.alert('Error', error.response?.data?.error || 'Failed to mark as delivered');
+    } finally {
+      setActioningOrderId(null);
     }
   };
 
@@ -120,12 +244,69 @@ export default function OrdersScreen() {
     );
   }
 
+  const displayOrders = filteredOrders.length > 0 ? filteredOrders : orders;
+  const isSupplier = user?.role === 'supplier';
+
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <Appbar.Header elevated>
         <Appbar.BackAction onPress={() => router.back()} />
-        <Appbar.Content title="My Orders" />
+        <Appbar.Content title={isSupplier ? 'Supplier Orders' : 'My Orders'} />
+        {isSupplier && (
+          <Menu
+            visible={filterMenuVisible}
+            onDismiss={() => setFilterMenuVisible(false)}
+            anchor={
+              <Appbar.Action
+                icon="filter-variant"
+                onPress={() => setFilterMenuVisible(true)}
+              />
+            }
+          >
+            <Menu.Item
+              onPress={() => handleFilterChange('all')}
+              title="All Orders"
+              leadingIcon={selectedFilter === 'all' ? 'check' : undefined}
+            />
+            <Menu.Item
+              onPress={() => handleFilterChange('placed')}
+              title="New Orders"
+              leadingIcon={selectedFilter === 'placed' ? 'check' : undefined}
+            />
+            <Menu.Item
+              onPress={() => handleFilterChange('confirmed')}
+              title="Confirmed"
+              leadingIcon={selectedFilter === 'confirmed' ? 'check' : undefined}
+            />
+            <Menu.Item
+              onPress={() => handleFilterChange('in_transit')}
+              title="In Transit"
+              leadingIcon={selectedFilter === 'in_transit' ? 'check' : undefined}
+            />
+            <Menu.Item
+              onPress={() => handleFilterChange('delivered')}
+              title="Delivered"
+              leadingIcon={selectedFilter === 'delivered' ? 'check' : undefined}
+            />
+            <Menu.Item
+              onPress={() => handleFilterChange('rejected')}
+              title="Rejected"
+              leadingIcon={selectedFilter === 'rejected' ? 'check' : undefined}
+            />
+          </Menu>
+        )}
       </Appbar.Header>
+
+      {isSupplier && (
+        <View style={styles.searchSection}>
+          <Searchbar
+            placeholder="Search orders, products..."
+            onChangeText={setSearchQuery}
+            value={searchQuery}
+            style={styles.searchBar}
+          />
+        </View>
+      )}
 
       <ScrollView
         style={styles.content}
@@ -137,7 +318,7 @@ export default function OrdersScreen() {
           />
         }
       >
-        {orders.length === 0 ? (
+        {displayOrders.length === 0 ? (
           <View style={styles.emptyContainer}>
             <MaterialIcons name="shopping-bag" size={64} color={theme.colors.onSurfaceVariant} />
             <Text variant="titleMedium" style={[styles.emptyText, { color: theme.colors.onSurface }]}>
@@ -151,7 +332,7 @@ export default function OrdersScreen() {
           </View>
         ) : (
           <View style={styles.ordersList}>
-            {orders.map((order: any) => (
+            {displayOrders.map((order: any) => (
               <Card key={order._id} style={styles.orderCard}>
                 <Card.Content>
                   <View style={styles.orderHeader}>
@@ -247,6 +428,62 @@ export default function OrdersScreen() {
                       </Text>
                     </View>
                   )}
+
+                  {isSupplier && (
+                    <View style={styles.supplierActions}>
+                      {order.status === 'placed' && (
+                        <View style={styles.actionButtons}>
+                          <Button
+                            mode="outlined"
+                            onPress={() => handleRejectOrder(order._id)}
+                            loading={actioningOrderId === order._id}
+                            disabled={actioningOrderId === order._id}
+                            style={[styles.actionButton, { borderColor: theme.colors.error }]}
+                            textColor={theme.colors.error}
+                            icon="close"
+                          >
+                            Reject
+                          </Button>
+                          <Button
+                            mode="contained"
+                            onPress={() => handleAcceptOrder(order._id)}
+                            loading={actioningOrderId === order._id}
+                            disabled={actioningOrderId === order._id}
+                            style={styles.actionButton}
+                            icon="check"
+                          >
+                            Accept
+                          </Button>
+                        </View>
+                      )}
+
+                      {order.status === 'confirmed' && (
+                        <Button
+                          mode="contained"
+                          onPress={() => handleMarkShipped(order._id)}
+                          loading={actioningOrderId === order._id}
+                          disabled={actioningOrderId === order._id}
+                          style={styles.statusButton}
+                          icon="truck"
+                        >
+                          Mark as Shipped
+                        </Button>
+                      )}
+
+                      {order.status === 'in_transit' && (
+                        <Button
+                          mode="contained"
+                          onPress={() => handleMarkDelivered(order._id)}
+                          loading={actioningOrderId === order._id}
+                          disabled={actioningOrderId === order._id}
+                          style={styles.statusButton}
+                          icon="check-circle"
+                        >
+                          Mark as Delivered
+                        </Button>
+                      )}
+                    </View>
+                  )}
                 </Card.Content>
               </Card>
             ))}
@@ -276,6 +513,13 @@ export default function OrdersScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  searchSection: {
+    padding: 16,
+    paddingBottom: 8,
+  },
+  searchBar: {
+    elevation: 2,
   },
   content: {
     flex: 1,
@@ -365,5 +609,21 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
     marginTop: 8,
+  },
+  supplierActions: {
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#e5e7eb',
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  actionButton: {
+    flex: 1,
+  },
+  statusButton: {
+    marginTop: 4,
   },
 });
