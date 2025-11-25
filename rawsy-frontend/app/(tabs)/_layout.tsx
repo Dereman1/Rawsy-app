@@ -88,6 +88,16 @@ export default function TabsLayout() {
   }}
 />
       <Tabs.Screen
+        name="wishlist"
+        options={{
+          title: t('wishlist'),
+          href: isManufacturer ? undefined : null,
+          tabBarIcon: ({ color, size, focused }) => (
+            <MaterialIcons name={focused ? "favorite" : "favorite-border"} size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="account"
         options={{
           title: t('account'),
