@@ -1,4 +1,4 @@
-import { View, StyleSheet, ScrollView, Alert, Dimensions, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, ScrollView, Alert, Dimensions, TouchableOpacity, Linking } from 'react-native';
 import {
   Text,
   Appbar,
@@ -7,7 +7,6 @@ import {
   Card,
   Chip,
   Divider,
-  IconButton,
   Badge,
   Surface,
 } from 'react-native-paper';
@@ -268,18 +267,43 @@ export default function ProductDetailsScreen() {
             Supplier Information
           </Text>
           <View style={styles.supplierRow}>
-            <MaterialIcons name="store" size={24} color={theme.colors.primary} />
+            <MaterialIcons name="store" size={28} color={theme.colors.primary} />
             <View style={styles.supplierInfo}>
-              <Text variant="titleMedium">{product.supplier?.name || 'Unknown Supplier'}</Text>
+              <Text variant="titleMedium" style={{ fontWeight: 'bold' }}>
+                {product.supplier?.name || 'Unknown Supplier'}
+              </Text>
+
               {product.supplier?.companyName && (
-                <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                <Text variant="bodyMedium" style={styles.supplierText}>
                   {product.supplier.companyName}
                 </Text>
               )}
+
+              {product.supplier?.location && (
+                <View style={styles.supplierRowInline}>
+                  <MaterialIcons name="location-on" size={16} color="#6b7280" />
+                  <Text variant="bodySmall" style={styles.supplierText}>
+                    {product.supplier.location}
+                  </Text>
+                </View>
+              )}
+
+              {product.supplier?.contact && (
+                <TouchableOpacity
+                  style={styles.supplierRowInline}
+                  onPress={() => Linking.openURL(`tel:${product.supplier.contact}`)}
+                >
+                  <MaterialIcons name="phone" size={16} color="#6b7280" />
+                  <Text variant="bodySmall" style={[styles.supplierText, { color: theme.colors.primary }]}>
+                    {product.supplier.contact}
+                  </Text>
+                </TouchableOpacity>
+              )}
+
               {product.supplier?.verifiedSupplier && (
                 <View style={styles.verifiedBadge}>
-                  <MaterialIcons name="verified" size={16} color="#10b981" />
-                  <Text variant="bodySmall" style={{ color: '#10b981' }}>
+                  <MaterialIcons name="verified" size={18} color="#10b981" />
+                  <Text variant="bodySmall" style={{ color: '#10b981', marginLeft: 4 }}>
                     Verified Supplier
                   </Text>
                 </View>
@@ -493,6 +517,16 @@ const styles = StyleSheet.create({
   },
   supplierInfo: {
     flex: 1,
+  },
+  supplierText: {
+    color: '#4b5563',
+    marginTop: 2,
+  },
+  supplierRowInline: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 2,
   },
   verifiedBadge: {
     flexDirection: 'row',
